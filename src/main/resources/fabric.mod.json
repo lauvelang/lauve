@@ -1,0 +1,31 @@
+{
+	"schemaVersion": 1,
+	"id": "lauve",
+	"version": "${version}",
+	"name": "Lauve",
+	"description": "Server-side scripting mod",
+	"authors": [
+		"sylvxa"
+	],
+	"contact": {
+		"homepage": "https://sylvie.lol/",
+		"sources": "https://github.com/lauvelang/"
+	},
+	"license": "MIT",
+	"icon": "assets/lauve/icon.png",
+	"environment": "server",
+	"entrypoints": {
+		"main": [
+			"lol.sylvie.lauve.Lauve"
+		]
+	},
+	"mixins": [
+		"lauve.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
