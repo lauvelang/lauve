@@ -12,7 +12,7 @@ import lol.sylvie.lauve.parsing.Token;
  */
 @SuppressWarnings("unchecked")
 public class NativeLauveInstance<T> extends AbstractLauveInstance {
-    private final T backing;
+    public final T backing;
 
     public NativeLauveInstance(NativeLauveClass<T> klass, T backing) {
         super(klass);
@@ -27,5 +27,11 @@ public class NativeLauveInstance<T> extends AbstractLauveInstance {
     @Override
     public void set(Token name, Object value) {
         ((NativeLauveClass<T>) this.klass).set(backing, name, value);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof NativeLauveInstance<?> otherInstance) return otherInstance.backing.equals(this.backing);
+        return super.equals(obj);
     }
 }
