@@ -7,16 +7,23 @@ import java.util.Map;
 
 public class LauveClass implements LauveCallable {
     public final String name;
+    final LauveClass superclass;
     private final Map<String, LauveFunction> methods;
 
-    public LauveClass(String name, Map<String, LauveFunction> methods) {
+    public LauveClass(String name, LauveClass superclass,
+                      Map<String, LauveFunction> methods) {
         this.name = name;
+        this.superclass = superclass;
         this.methods = methods;
     }
 
     public LauveFunction findMethod(String name) {
         if (methods.containsKey(name)) {
             return methods.get(name);
+        }
+
+        if (superclass != null) {
+            return superclass.findMethod(name);
         }
 
         return null;

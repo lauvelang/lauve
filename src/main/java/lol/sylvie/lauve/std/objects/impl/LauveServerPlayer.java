@@ -7,6 +7,8 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Map;
 
 public class LauveServerPlayer extends NativeLauveClass<ServerPlayer> {
+
+
     public LauveServerPlayer(String name, Map<String, LauveFunction> methods) {
         super(name, methods, ServerPlayer.class);
     }
