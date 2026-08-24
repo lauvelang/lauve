@@ -1,0 +1,31 @@
+{
+  "shape": "normal",
+  "description": [
+    {
+      "type": "label",
+      "id": "set"
+    },
+    {
+      "type": "input",
+      "id": "variable",
+      "controller": "variable"
+    },
+    {
+      "type": "label",
+      "id": "to"
+    },
+    {
+      "type": "input",
+      "id": "value",
+      "controller": "any"
+    },
+    {
+      "type": "option",
+      "id": "scope",
+      "options": [
+        "local",
+        "global"
+      ]
+    }
+  ]
+}
