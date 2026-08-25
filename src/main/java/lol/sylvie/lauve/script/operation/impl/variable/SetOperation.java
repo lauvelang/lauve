@@ -1,9 +1,9 @@
 package lol.sylvie.lauve.script.operation.impl.variable;
 
 import lol.sylvie.lauve.script.manager.ScriptManager;
-import lol.sylvie.lauve.script.node.Node;
 import lol.sylvie.lauve.script.operation.Operation;
 import lol.sylvie.lauve.script.runtime.Context;
+import lol.sylvie.lauve.script.runtime.node.OperationNode;
 import lol.sylvie.lauve.util.Types;
 
 import java.util.Map;
@@ -14,7 +14,7 @@ public class SetOperation extends Operation {
     }
 
     @Override
-    public void operate(Context context, Node node, Map<String, Object> args) {
+    public void operate(Context context, OperationNode node, Map<String, Object> args) {
         String name = Types.string(args.get("key"));
         Object value = args.get("value");
 

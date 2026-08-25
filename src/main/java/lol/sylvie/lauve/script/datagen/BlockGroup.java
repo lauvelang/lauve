@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public abstract class BlockGroup {
-    private final HashMap<String, Definition> definitions = new HashMap<>();
+    private final HashMap<Id, Definition> definitions = new HashMap<>();
 
     private final String namespace;
     protected final File folder;
@@ -31,7 +31,7 @@ public abstract class BlockGroup {
     }
 
     protected void define(Definition definition) {
-        this.definitions.put(definition.getDescribes().namespace(), definition);
+        this.definitions.put(definition.getDescribes(), definition);
     }
 
     protected Id id(String path) {
@@ -45,7 +45,7 @@ public abstract class BlockGroup {
 
         this.init();
         definitions.forEach((id, definition) -> {
-            File file = folder.toPath().resolve(id + ".json").toFile();
+            File file = folder.toPath().resolve(id.path() + ".json").toFile();
             toFile(file, definition);
         });
     }

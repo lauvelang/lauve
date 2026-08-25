@@ -20,5 +20,11 @@ public class VariableGroup extends BlockGroup {
                 .input("value", InputPart.Controller.ANY)
                 .option("scope", List.of("local", "global"))
                 .build());
+
+        define(Definition.builder(id("get"))
+                .getter(true)
+                .label("get")
+                .input("variable", InputPart.Controller.VARIABLE)
+                .build());
     }
 }

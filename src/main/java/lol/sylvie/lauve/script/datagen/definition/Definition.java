@@ -27,10 +27,17 @@ public class Definition implements JsonSerializable {
     @Singular("part")
     private List<Part> parts;
 
+    @Builder.Default
+    private boolean getter = false;
+
     @Override
     public JsonObject toJson() {
         JsonObject root = new JsonObject();
-        root.addProperty("shape", shape.name().toLowerCase(Locale.ROOT));
+
+        root.addProperty("getter", this.getter);
+
+        if (!getter)
+            root.addProperty("shape", this.shape.name().toLowerCase(Locale.ROOT));
 
         JsonArray array = new JsonArray();
         this.parts.forEach(part -> array.add(part.toJson()));

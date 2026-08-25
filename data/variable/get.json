@@ -1,0 +1,14 @@
+{
+  "getter": true,
+  "description": [
+    {
+      "type": "label",
+      "id": "get"
+    },
+    {
+      "type": "input",
+      "id": "variable",
+      "controller": "variable"
+    }
+  ]
+}

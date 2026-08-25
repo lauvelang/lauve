@@ -1,7 +1,5 @@
 package lol.sylvie.lauve.util;
 
-import lol.sylvie.lauve.script.runtime.Context;
-
 public class Types {
     public static String string(Object object) {
         return String.valueOf(object);
