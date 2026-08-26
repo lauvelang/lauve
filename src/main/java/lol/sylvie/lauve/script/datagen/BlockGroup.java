@@ -2,6 +2,7 @@ package lol.sylvie.lauve.script.datagen;
 
 import com.google.gson.JsonObject;
 import lol.sylvie.lauve.script.datagen.definition.Definition;
+import lol.sylvie.lauve.util.Constants;
 import lol.sylvie.lauve.util.Id;
 
 import java.io.File;
@@ -24,7 +25,7 @@ public abstract class BlockGroup {
     protected static void toFile(File file, JsonSerializable serializable) {
         try (FileWriter writer = new FileWriter(file)) {
             JsonObject object = serializable.toJson();
-            ScriptDatagen.GSON.toJson(object, writer);
+            Constants.GSON.toJson(object, writer);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

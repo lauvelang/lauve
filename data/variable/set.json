@@ -1,5 +1,6 @@
 {
-  "getter": false,
+  "is_input": false,
+  "has_children": false,
   "shape": "normal",
   "description": [
     {

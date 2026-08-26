@@ -15,6 +15,13 @@ public record Id(String namespace, String path) {
         return namespace + separator + path;
     }
 
+    public Id(String string) {
+        String[] split = string.split(separator);
+        if (split.length != 2) throw new IllegalArgumentException("Correct format for ID is namespace:path");
+
+        this(split[0], split[1]);
+    }
+
     @Override
     public int hashCode() {
         return this.toString().hashCode();
@@ -23,7 +30,7 @@ public record Id(String namespace, String path) {
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
-        if (!(obj instanceof Id other)) return false;
-        return other.namespace.equals(this.namespace) && other.path.equals(this.path);
+        if (!(obj instanceof Id(String namespace2, String path2))) return false;
+        return namespace2.equals(this.namespace) && path2.equals(this.path);
     }
 }

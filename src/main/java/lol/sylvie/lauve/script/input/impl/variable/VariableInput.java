@@ -14,7 +14,7 @@ public class VariableInput extends Input {
     }
 
     @Override
-    public Object get(Context context, InputNode node, Map<String, Object> args) {
+    public Object get(Context context, Map<String, Object> args) {
         String name = Types.string(args.get("name"));
         Object local = context.getLocal(name);
         if (local != null) return local;

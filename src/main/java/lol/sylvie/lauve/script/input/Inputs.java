@@ -12,6 +12,10 @@ public class Inputs {
         inputs.put(input.getId(), input);
     }
 
+    public static Input get(Id key) {
+        return inputs.get(key);
+    }
+
     static {
         // Variables
         register(new VariableInput());

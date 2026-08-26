@@ -22,7 +22,7 @@ public class VariableGroup extends BlockGroup {
                 .build());
 
         define(Definition.builder(id("get"))
-                .getter(true)
+                .isInput(true)
                 .label("get")
                 .input("variable", InputPart.Controller.VARIABLE)
                 .build());

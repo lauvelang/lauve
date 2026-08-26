@@ -1,15 +1,16 @@
 {
-  "is_input": true,
+  "is_input": false,
   "has_children": false,
+  "shape": "normal",
   "description": [
     {
       "type": "label",
-      "id": "get"
+      "id": "log"
     },
     {
       "type": "input",
-      "id": "variable",
-      "controller": "variable"
+      "id": "text",
+      "controller": "string"
     }
   ]
 }
