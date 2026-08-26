@@ -1,8 +1,5 @@
 {
   "entrypoint": "fedc9fea-fdce-4fc4-bb4b-117c52a2135c",
-  "inputs": {
-
-  },
   "operations": {
     "fedc9fea-fdce-4fc4-bb4b-117c52a2135c": {
       "opcode": "debug:dummy",
@@ -10,12 +7,51 @@
       "parent": null,
       "next": "6ba9b5d5-d73f-48a7-8afa-e1711a06e6bc"
     },
-    "6ba9b5d5-d73f-48a7-8afa-e1711a06e6bc": {
-      "opcode": "debug:log",
+    "030ad615-2321-4504-8770-c9900dad2873": {
+      "opcode": "math:random_number",
       "args": {
-        "text": "cc8e2a4c-2daf-4a6e-82c2-1336b8eb1024"
+        "origin": [true, 0],
+        "bound": [true, 10]
+      }
+    },
+    "21ca5efe-aff9-458e-a9c2-a65e8173038c": {
+      "opcode": "math:multiply",
+      "args": {
+        "first": [true, "<3 "],
+        "second": [false, "030ad615-2321-4504-8770-c9900dad2873"]
+      }
+    },
+    "d876a985-aede-4dbd-b0d4-f8f1f744b5b8": {
+      "opcode": "math:add",
+      "args": {
+        "first": [true, "made with love by sylvie "],
+        "second": [false, "21ca5efe-aff9-458e-a9c2-a65e8173038c"]
+      }
+    },
+    "6ba9b5d5-d73f-48a7-8afa-e1711a06e6bc": {
+      "opcode": "variable:set",
+      "args": {
+        "key": [true, "msg"],
+        "value": [false, "d876a985-aede-4dbd-b0d4-f8f1f744b5b8"],
+        "global": [true, false]
       },
       "parent": "fedc9fea-fdce-4fc4-bb4b-117c52a2135c",
+      "next": "c2f0ed49-d4eb-4da2-beec-0ca273754b4e"
+    },
+    "002aff2a-ddb1-435b-a4a7-3cdb7bd284b2": {
+      "opcode": "variable:get",
+      "args": {
+        "key": [true, "msg"]
+      },
+      "parent": null,
+      "next": null
+    },
+    "c2f0ed49-d4eb-4da2-beec-0ca273754b4e": {
+      "opcode": "debug:log",
+      "args": {
+        "text": [false, "002aff2a-ddb1-435b-a4a7-3cdb7bd284b2"]
+      },
+      "parent": "6ba9b5d5-d73f-48a7-8afa-e1711a06e6bc",
       "next": null
     }
   }

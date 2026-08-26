@@ -1,6 +1,7 @@
-package lol.sylvie.lauve.script.runtime;
+package lol.sylvie.lauve.script.runtime.interpreter;
 
-import lol.sylvie.lauve.script.runtime.node.OperationNode;
+import lol.sylvie.lauve.script.runtime.script.Node;
+import lol.sylvie.lauve.script.runtime.script.Script;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -14,7 +15,7 @@ public class Context {
     private final Script script;
 
     @Setter
-    private OperationNode working;
+    private Node working;
     private final HashMap<String, Object> locals = new HashMap<>();
 
     public Object getLocal(String name) {

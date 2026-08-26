@@ -1,6 +1,9 @@
 package lol.sylvie.lauve.script.runtime;
 
-import lol.sylvie.lauve.script.runtime.node.OperationNode;
+import lol.sylvie.lauve.script.runtime.interpreter.Context;
+import lol.sylvie.lauve.script.runtime.interpreter.Interpreter;
+import lol.sylvie.lauve.script.runtime.script.Node;
+import lol.sylvie.lauve.script.runtime.script.Script;
 
 import java.io.File;
 
@@ -16,7 +19,7 @@ public class RuntimeEntrypoint {
         script.load();
 
         Context context = new Context(script);
-        OperationNode node = script.getEntrypoint();
+        Node node = script.getEntrypoint();
         Interpreter.walk(context, node);
     }
 }

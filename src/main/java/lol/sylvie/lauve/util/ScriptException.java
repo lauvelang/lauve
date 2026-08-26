@@ -1,6 +1,6 @@
 package lol.sylvie.lauve.util;
 
-import lol.sylvie.lauve.script.runtime.Context;
+import lol.sylvie.lauve.script.runtime.interpreter.Context;
 
 public class ScriptException extends RuntimeException {
     private final Context context;

@@ -1,9 +1,9 @@
-package lol.sylvie.lauve.script.manager;
+package lol.sylvie.lauve.script.runtime;
 
 import java.util.HashMap;
 
-public class ScriptManager {
-    private static HashMap<String, Object> globals = new HashMap<>();
+public class Runtime {
+    private static final HashMap<String, Object> globals = new HashMap<>();
 
     public static Object getGlobal(String name) {
         return globals.get(name);

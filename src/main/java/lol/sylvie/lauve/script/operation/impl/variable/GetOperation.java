@@ -8,21 +8,17 @@ import lol.sylvie.lauve.util.Types;
 
 import java.util.Map;
 
-public class SetOperation extends Operation {
-    public SetOperation() {
-        super("set");
+public class GetOperation extends Operation {
+    public GetOperation() {
+        super("get");
     }
 
     @Override
     public Object operate(Context context, Node node, Map<String, Object> args) {
         String name = Types.asString(args.get("key"));
-        Object value = args.get("value");
+        Object local = context.getLocal(name);
+        if (local != null) return local;
 
-        if (Types.asBool(args.get("global"))) {
-            Runtime.setGlobal(name, value);
-        } else {
-            context.setLocal(name, value);
-        }
-        return null;
+        return Runtime.getGlobal(name);
     }
 }
