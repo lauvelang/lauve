@@ -1,0 +1,22 @@
+package lol.sylvie.lauve.script.runtime;
+
+import lol.sylvie.lauve.script.runtime.node.OperationNode;
+
+import java.io.File;
+
+public class RuntimeEntrypoint {
+    static void main(String[] args) {
+        if (args.length != 1) {
+            System.out.println("Usage: [script file]");
+            System.exit(-1);
+        }
+
+        String path = args[0];
+        Script script = new Script(new File(path));
+        script.load();
+
+        Context context = new Context(script);
+        OperationNode node = script.getEntrypoint();
+        Interpreter.walk(context, node);
+    }
+}

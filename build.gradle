@@ -76,6 +76,18 @@ publishing {
 	}
 }
 
+// Run script
+tasks.register('runScript', JavaExec) {
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass = 'lol.sylvie.lauve.script.runtime.RuntimeEntrypoint'
+
+	doFirst {
+		if (!workingDir.exists()) {
+			workingDir.mkdirs()
+		}
+	}
+}
+
 // Data generation
 tasks.register('generateEditorData', JavaExec) {
 	classpath = sourceSets.main.runtimeClasspath

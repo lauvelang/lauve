@@ -10,6 +10,6 @@ public record OperationNode(
         UUID rid,
         Operation operation,
         HashMap<String, InputNode> args,
-        @Nullable OperationNode parent,
-        @Nullable OperationNode next) {
+        @Nullable UUID parent,
+        @Nullable UUID next) {
 }

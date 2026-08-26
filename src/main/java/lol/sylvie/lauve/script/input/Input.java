@@ -16,5 +16,5 @@ public abstract class Input extends IdentifiedObject {
         super(name);
     }
 
-    public abstract Object get(Context context, Map<String, Object> args);
+    public abstract Object get(Context context, Map<String, InputNode> args);
 }

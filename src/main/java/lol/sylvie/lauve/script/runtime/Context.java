@@ -1,6 +1,7 @@
 package lol.sylvie.lauve.script.runtime;
 
 import lol.sylvie.lauve.script.runtime.node.OperationNode;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
@@ -9,6 +10,7 @@ import java.util.HashMap;
 // Interpreter context
 @RequiredArgsConstructor
 public class Context {
+    @Getter
     private final Script script;
 
     @Setter

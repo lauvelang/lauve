@@ -1,0 +1,22 @@
+{
+  "entrypoint": "fedc9fea-fdce-4fc4-bb4b-117c52a2135c",
+  "inputs": {
+
+  },
+  "operations": {
+    "fedc9fea-fdce-4fc4-bb4b-117c52a2135c": {
+      "opcode": "debug:dummy",
+      "args": {},
+      "parent": null,
+      "next": "6ba9b5d5-d73f-48a7-8afa-e1711a06e6bc"
+    },
+    "6ba9b5d5-d73f-48a7-8afa-e1711a06e6bc": {
+      "opcode": "debug:log",
+      "args": {
+        "text": "cc8e2a4c-2daf-4a6e-82c2-1336b8eb1024"
+      },
+      "parent": "fedc9fea-fdce-4fc4-bb4b-117c52a2135c",
+      "next": null
+    }
+  }
+}

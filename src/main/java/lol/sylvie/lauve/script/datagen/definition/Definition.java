@@ -28,20 +28,14 @@ public class Definition implements JsonSerializable {
     private List<Part> parts;
 
     @Builder.Default
-    private boolean isInput = false;
-
-    @Builder.Default
     private boolean hasChildren = false;
 
     @Override
     public JsonObject toJson() {
         JsonObject root = new JsonObject();
 
-        root.addProperty("is_input", this.isInput);
         root.addProperty("has_children", this.hasChildren);
-
-        if (!isInput)
-            root.addProperty("shape", this.shape.name().toLowerCase(Locale.ROOT));
+        root.addProperty("shape", this.shape.name().toLowerCase(Locale.ROOT));
 
         JsonArray array = new JsonArray();
         this.parts.forEach(part -> array.add(part.toJson()));

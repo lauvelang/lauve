@@ -14,7 +14,9 @@ public class Serialization {
     }
 
     public static UUID uuidOf(JsonObject object, String key) {
-        String uuidAsString = object.get(key).getAsString();
+        JsonElement element = object.get(key);
+        if (element == null || element.isJsonNull()) return null;
+        String uuidAsString = element.getAsString();
         return UUID.fromString(uuidAsString);
     }
 }

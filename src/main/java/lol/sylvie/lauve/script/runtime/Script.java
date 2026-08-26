@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
@@ -27,6 +26,7 @@ import java.util.UUID;
 public class Script {
     private final File file;
 
+    private UUID entrypoint;
     private final HashMap<UUID, OperationNode> operationNodes = new HashMap<>();
     private final HashMap<UUID, InputNode> inputNodes = new HashMap<>();
 
@@ -55,14 +55,7 @@ public class Script {
         return new InputNode(rid, input, args);
     }
 
-    private @Nullable OperationNode getOrLoadOperationNode(UUID rid, JsonObject root) {
-        String ridString = rid.toString();
-        if (!root.has(ridString)) return null;
-
-        return operationNodes.computeIfAbsent(rid, _ -> loadOperationNode(rid, root, root.getAsJsonObject(ridString)));
-    }
-
-    public OperationNode loadOperationNode(UUID rid, JsonObject root, JsonObject object) {
+    public OperationNode loadOperationNode(UUID rid, JsonObject object) {
         Id key = new Id(object.get("opcode").getAsString());
         Operation operation = Operations.get(key);
 
@@ -75,10 +68,11 @@ public class Script {
             args.put(argKey, inputNodes.get(reference));
         }
 
-        OperationNode parent = getOrLoadOperationNode(Serialization.uuidOf(object, "parent"), root);
-        OperationNode next = getOrLoadOperationNode(Serialization.uuidOf(object, "next"), root);
-
-        return new OperationNode(rid, operation, args, parent, next);
+        return new OperationNode(rid,
+                operation,
+                args,
+                Serialization.uuidOf(object, "parent"),
+                Serialization.uuidOf(object, "next"));
     }
 
     public void load() {
@@ -89,20 +83,7 @@ public class Script {
             throw new RuntimeException(e);
         }
 
-        // Operation nodes
-        JsonObject operations = root.getAsJsonObject("operations");
-        for (String operationUuidString : operations.keySet()) {
-            UUID operationUuid = UUID.fromString(operationUuidString);
-
-            OperationNode operationNode = operationNodes.get(operationUuid);
-            if (operationNode == null) {
-                JsonObject operationObject = operations.getAsJsonObject(operationUuidString);
-                operationNode = loadOperationNode(operationUuid, operations, operationObject);
-                operationNodes.put(operationUuid, operationNode);
-            }
-
-            // TODO: event subscription stuff
-        }
+        this.entrypoint = Serialization.uuidOf(root, "entrypoint");
 
         // Input nodes
         JsonObject inputs = root.getAsJsonObject("inputs");
@@ -114,6 +95,28 @@ public class Script {
             InputNode inputNode = loadInputNode(inputUuid, inputs, inputObject);
             inputNodes.put(inputUuid, inputNode);
         }
+
+        // Operation nodes
+        JsonObject operations = root.getAsJsonObject("operations");
+        for (String operationUuidString : operations.keySet()) {
+            UUID operationUuid = UUID.fromString(operationUuidString);
+
+            OperationNode operationNode = operationNodes.get(operationUuid);
+            if (operationNode == null) {
+                JsonObject operationObject = operations.getAsJsonObject(operationUuidString);
+                operationNode = loadOperationNode(operationUuid, operationObject);
+                operationNodes.put(operationUuid, operationNode);
+            }
+
+            // TODO: event subscription stuff
+        }
     }
 
+    public OperationNode getEntrypoint() {
+        return getOperationNode(this.entrypoint);
+    }
+
+    public OperationNode getOperationNode(UUID reference) {
+        return operationNodes.get(reference);
+    }
 }

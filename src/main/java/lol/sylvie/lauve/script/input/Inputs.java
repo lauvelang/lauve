@@ -6,7 +6,7 @@ import lol.sylvie.lauve.util.Id;
 import java.util.HashMap;
 
 public class Inputs {
-    private static HashMap<Id, Input> inputs;
+    private static final HashMap<Id, Input> inputs = new HashMap<>();
 
     private static void register(Input input) {
         inputs.put(input.getId(), input);

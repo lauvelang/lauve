@@ -27,8 +27,8 @@ public class Interpreter {
             HashMap<String, Object> args = evaluate(context, current.args());
             operation.operate(context, current, args);
 
-            current = current.next();
+            current = context.getScript().getOperationNode(current.next());
             context.setWorking(current);
-        } while (current.next() != null);
+        } while (current != null);
     }
 }
