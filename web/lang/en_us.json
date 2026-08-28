@@ -1,0 +1,5 @@
+{
+  "control:load": {
+    "label": "on script load"
+  }
+}
