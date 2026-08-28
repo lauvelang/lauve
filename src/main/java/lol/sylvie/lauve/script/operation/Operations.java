@@ -1,13 +1,16 @@
 package lol.sylvie.lauve.script.operation;
 
 //import lol.sylvie.lauve.script.operation.impl.control.SetupOperation;
-import lol.sylvie.lauve.script.operation.impl.debug.DummyOperation;
+import lol.sylvie.lauve.script.operation.impl.condition.EqualsOperation;
+import lol.sylvie.lauve.script.operation.impl.condition.NotOperation;
+import lol.sylvie.lauve.script.operation.impl.control.IfOperation;
+import lol.sylvie.lauve.script.operation.impl.control.LoadOperation;
+import lol.sylvie.lauve.script.operation.impl.control.WhileOperation;
 import lol.sylvie.lauve.script.operation.impl.debug.LogOperation;
 import lol.sylvie.lauve.script.operation.impl.math.*;
 import lol.sylvie.lauve.script.operation.impl.variable.GetOperation;
 import lol.sylvie.lauve.script.operation.impl.variable.SetOperation;
 import lol.sylvie.lauve.util.Id;
-import lombok.Getter;
 
 import java.util.HashMap;
 import java.util.function.Supplier;
@@ -29,7 +32,7 @@ public class Operations {
 
     static {
         // Debug
-        register(DummyOperation::new);
+
         register(LogOperation::new);
 
         // Math
@@ -40,11 +43,17 @@ public class Operations {
 
         register(RandomNumberOperation::new);
 
+        // Conditions
+        register(NotOperation::new);
+        register(EqualsOperation::new);
+
         // Variables
         register(SetOperation::new);
         register(GetOperation::new);
 
         // Control
-        //register(new SetupOperation());
+        register(IfOperation::new);
+        register(WhileOperation::new);
+        register(LoadOperation::new);
     }
 }

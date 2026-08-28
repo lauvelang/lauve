@@ -7,13 +7,14 @@ import lombok.RequiredArgsConstructor;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 
 @RequiredArgsConstructor
 public class Script {
     private final File file;
 
-    private String entrypoint;
     private final HashMap<String, Node> operationNodes = new HashMap<>();
 
     public void load() {
@@ -23,8 +24,6 @@ public class Script {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        this.entrypoint = root.get("entrypoint").getAsString();
 
         // Operation nodes
         JsonObject operations = root.getAsJsonObject("operations");
@@ -38,11 +37,11 @@ public class Script {
         }
     }
 
-    public Node getEntrypoint() {
-        return getNode(this.entrypoint);
-    }
-
     public Node getNode(String reference) {
         return operationNodes.get(reference);
+    }
+
+    public Collection<Node> allNodes() {
+        return operationNodes.values();
     }
 }

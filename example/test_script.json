@@ -1,8 +1,7 @@
 {
-  "entrypoint": "fedc9fea-fdce-4fc4-bb4b-117c52a2135c",
   "operations": {
     "fedc9fea-fdce-4fc4-bb4b-117c52a2135c": {
-      "opcode": "debug:dummy",
+      "opcode": "control:load",
       "args": {},
       "parent": null,
       "next": "6ba9b5d5-d73f-48a7-8afa-e1711a06e6bc"

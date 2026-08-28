@@ -21,6 +21,7 @@ public class InputPart extends Part {
         VARIABLE,
         NUMBER,
         STRING,
+        BOOLEAN,
         SELECT
     }
 

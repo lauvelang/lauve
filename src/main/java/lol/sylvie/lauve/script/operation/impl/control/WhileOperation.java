@@ -5,18 +5,17 @@ import lol.sylvie.lauve.script.runtime.interpreter.Context;
 import lol.sylvie.lauve.script.runtime.interpreter.Interpreter;
 import lol.sylvie.lauve.script.runtime.script.Argument;
 import lol.sylvie.lauve.script.runtime.script.Node;
-import lol.sylvie.lauve.util.Types;
 
 import java.util.Map;
 
-public class IfOperation extends Operation {
-    public IfOperation() {
-        super("if");
+public class WhileOperation extends Operation {
+    public WhileOperation() {
+        super("while");
     }
 
     @Override
     public Object operate(Context context, Node node, Map<String, Argument> args) {
-        if (bool(context, args, "condition")) {
+        while (bool(context, args, "condition")) {
             Node target = node(context, args, "child");
             Interpreter.walk(context, target);
         }
