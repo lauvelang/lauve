@@ -22,15 +22,6 @@ public abstract class BlockGroup {
         this.folder = new File("./" + this.namespace);
     }
 
-    protected static void toFile(File file, JsonSerializable serializable) {
-        try (FileWriter writer = new FileWriter(file)) {
-            JsonObject object = serializable.toJson();
-            Constants.GSON.toJson(object, writer);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     protected void define(Definition definition) {
         this.definitions.put(definition.getDescribes(), definition);
     }
@@ -39,16 +30,16 @@ public abstract class BlockGroup {
         return new Id(this.namespace, path);
     }
 
-    public void write() {
-        if (!(this.folder.exists())) {
-            this.folder.mkdir();
-        }
+    public void write(JsonObject object) {
+        JsonObject root = new JsonObject();
 
         this.init();
         definitions.forEach((id, definition) -> {
-            File file = folder.toPath().resolve(id.path() + ".json").toFile();
-            toFile(file, definition);
+            JsonObject serialized = definition.toJson();
+            root.add(id.path(), serialized);
         });
+
+        object.add(this.namespace, root);
     }
 
     public abstract void init();
