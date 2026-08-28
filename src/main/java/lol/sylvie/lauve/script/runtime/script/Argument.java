@@ -1,13 +1,11 @@
 package lol.sylvie.lauve.script.runtime.script;
 
-import java.util.UUID;
-
-public record Argument(Object computed, UUID references) {
+public record Argument(Object computed, String references) {
     public Argument(Object computed) {
         this(computed, null);
     }
 
-    public Argument(UUID references) {
+    public Argument(String references) {
         this(null, references);
     }
 

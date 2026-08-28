@@ -1,25 +1,24 @@
 package lol.sylvie.lauve.script.runtime.script;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import lol.sylvie.lauve.script.operation.Operation;
 import lol.sylvie.lauve.script.operation.Operations;
 import lol.sylvie.lauve.util.Id;
-import lol.sylvie.lauve.util.Serialization;
 import lol.sylvie.lauve.util.Types;
 import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.UUID;
 
 public record Node(
-        UUID rid,
+        String rid,
         Operation operation,
         HashMap<String, Argument> args,
-        @Nullable UUID parent,
-        @Nullable UUID next) {
-    public static Node load(UUID rid, JsonObject object) {
+        @Nullable String parent,
+        @Nullable String next) {
+    public static Node load(String rid, JsonObject object) {
         Id key = new Id(object.get("opcode").getAsString());
         Operation operation = Operations.get(key);
         if (operation == null) throw new RuntimeException("Operation not found: " + key);
@@ -35,18 +34,20 @@ public record Node(
             if (computed) {
                 argument = new Argument(Types.closestJava(primitive));
             } else {
-                String stringUuid = primitive.getAsString();
-                UUID uuid = UUID.fromString(stringUuid);
-                argument = new Argument(uuid);
+                String stringRid = primitive.getAsString();
+                argument = new Argument(stringRid);
             }
 
             args.put(argKey, argument);
         }
 
+        JsonElement parentElement = object.get("parent");
+        JsonElement nextElement = object.get("next");
+
         return new Node(rid,
                 operation,
                 args,
-                Serialization.uuidOf(object, "parent"),
-                Serialization.uuidOf(object, "next"));
+                parentElement == null || parentElement.isJsonNull() ? null : parentElement.getAsString(),
+                nextElement == null || nextElement.isJsonNull() ? null : nextElement.getAsString());
     }
 }

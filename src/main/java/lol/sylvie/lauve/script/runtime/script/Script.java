@@ -2,23 +2,19 @@ package lol.sylvie.lauve.script.runtime.script;
 
 import com.google.gson.JsonObject;
 import lol.sylvie.lauve.util.Constants;
-import lol.sylvie.lauve.util.Serialization;
 import lombok.RequiredArgsConstructor;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.UUID;
 
 @RequiredArgsConstructor
 public class Script {
     private final File file;
 
-    private UUID entrypoint;
-    private final HashMap<UUID, Node> operationNodes = new HashMap<>();
-
-
+    private String entrypoint;
+    private final HashMap<String, Node> operationNodes = new HashMap<>();
 
     public void load() {
         JsonObject root;
@@ -28,18 +24,16 @@ public class Script {
             throw new RuntimeException(e);
         }
 
-        this.entrypoint = Serialization.uuidOf(root, "entrypoint");
+        this.entrypoint = root.get("entrypoint").getAsString();
 
         // Operation nodes
         JsonObject operations = root.getAsJsonObject("operations");
-        for (String operationUuidString : operations.keySet()) {
-            UUID operationUuid = UUID.fromString(operationUuidString);
-
-            Node operationNode = operationNodes.get(operationUuid);
+        for (String operationRid : operations.keySet()) {
+            Node operationNode = operationNodes.get(operationRid);
             if (operationNode == null) {
-                JsonObject operationObject = operations.getAsJsonObject(operationUuidString);
-                operationNode = Node.load(operationUuid, operationObject);
-                operationNodes.put(operationUuid, operationNode);
+                JsonObject operationObject = operations.getAsJsonObject(operationRid);
+                operationNode = Node.load(operationRid, operationObject);
+                operationNodes.put(operationRid, operationNode);
             }
         }
     }
@@ -48,7 +42,7 @@ public class Script {
         return getNode(this.entrypoint);
     }
 
-    public Node getNode(UUID reference) {
+    public Node getNode(String reference) {
         return operationNodes.get(reference);
     }
 }
