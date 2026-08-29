@@ -4,10 +4,14 @@ import lol.sylvie.lauve.script.datagen.BlockGroup;
 import lol.sylvie.lauve.script.datagen.definition.Definition;
 import lol.sylvie.lauve.script.datagen.definition.NodeShape;
 import lol.sylvie.lauve.script.datagen.definition.part.InputPart;
+import net.minecraft.util.CommonColors;
+import net.minecraft.world.item.DyeColor;
+
+import java.awt.*;
 
 public class ConditionGroup extends BlockGroup {
     public ConditionGroup() {
-        super("condition");
+        super("condition", new Color(DyeColor.LIME.getTextColor()));
     }
 
     @Override

@@ -1,5 +1,28 @@
 {
-  "control:load": {
-    "label": "on script load"
+  "control": {
+    "_name": "Control",
+    "load": {
+      "label": "⚐ on script load"
+    },
+    "while": {
+      "control": "while"
+    }
+  },
+  "debug": {
+    "_name": "Debugging",
+    "log": {
+      "log": "log",
+      "destination": "to console"
+    }
+  },
+  "variable": {
+    "_name": "Variable",
+    "set": {
+      "set": "set",
+      "to": "to"
+    },
+    "get": {
+      "get": "value of"
+    }
   }
 }

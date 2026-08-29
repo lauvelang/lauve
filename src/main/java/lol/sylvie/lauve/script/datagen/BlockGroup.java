@@ -1,10 +1,12 @@
 package lol.sylvie.lauve.script.datagen;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import lol.sylvie.lauve.script.datagen.definition.Definition;
 import lol.sylvie.lauve.util.Constants;
 import lol.sylvie.lauve.util.Id;
 
+import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -15,9 +17,11 @@ public abstract class BlockGroup {
 
     private final String namespace;
     protected final File folder;
+    protected final Color color;
 
-    protected BlockGroup(String namespace) {
+    protected BlockGroup(String namespace, Color color) {
         this.namespace = namespace;
+        this.color = color;
 
         this.folder = new File("./" + this.namespace);
     }
@@ -32,6 +36,12 @@ public abstract class BlockGroup {
 
     public void write(JsonObject object) {
         JsonObject root = new JsonObject();
+
+        JsonArray color = new JsonArray();
+        color.add(this.color.getRed());
+        color.add(this.color.getGreen());
+        color.add(this.color.getBlue());
+        root.add("color", color);
 
         this.init();
         definitions.forEach((id, definition) -> {

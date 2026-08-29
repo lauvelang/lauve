@@ -5,10 +5,14 @@ import lol.sylvie.lauve.script.datagen.definition.Definition;
 import lol.sylvie.lauve.script.datagen.definition.NodeShape;
 import lol.sylvie.lauve.script.datagen.definition.part.InputPart;
 import lol.sylvie.lauve.util.Id;
+import net.minecraft.util.CommonColors;
+import net.minecraft.world.item.DyeColor;
+
+import java.awt.*;
 
 public class MathGroup extends BlockGroup {
     public MathGroup() {
-        super("math");
+        super("math", new Color(DyeColor.RED.getTextColor()));
     }
 
     private void defineDualOperand(Id id) {

@@ -4,12 +4,15 @@ import lol.sylvie.lauve.script.datagen.BlockGroup;
 import lol.sylvie.lauve.script.datagen.definition.Definition;
 import lol.sylvie.lauve.script.datagen.definition.NodeShape;
 import lol.sylvie.lauve.script.datagen.definition.part.InputPart;
+import net.minecraft.util.CommonColors;
+import net.minecraft.world.item.DyeColor;
 
+import java.awt.*;
 import java.util.List;
 
 public class VariableGroup extends BlockGroup {
     public VariableGroup() {
-        super("variable");
+        super("variable", new Color(DyeColor.PURPLE.getTextColor()));
     }
 
     @Override
