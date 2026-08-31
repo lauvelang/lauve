@@ -374,13 +374,33 @@ function getNearestConnectableNode(x, y) {
     return [isInner, closestRid, closest];
 }
 
+function checkIfChild(parentRid, nodeRid) {
+    let parent = lookupNode(parentRid);
+    let parentArgs = parent.args;
+    for (let argName in parentArgs) {
+        let argValue = parentArgs[argName];
+        if (argValue[0]) continue;
+
+        let childRid = argValue[1];
+        if (childRid === nodeRid) return true;
+``
+        if (checkIfChild(childRid, nodeRid)) return true;
+    }
+    return false;
+}
+
 function getNearestAvailableField(x, y) {
     let closestDist = Infinity
     let closestRid;
+    let closestParent;
+    let closestFieldName;
+
     for (let rid in hitboxes) {
+        if (rid === grabbedNodeRid) continue;
         let thisHitbox = hitboxes[rid];
 
         let thisNode = lookupNode(rid);
+        if (checkIfChild(grabbedNodeRid, rid)) continue;
 
         for (let fieldName in thisHitbox.fields) {
             let field = thisHitbox.fields[fieldName];
@@ -398,10 +418,12 @@ function getNearestAvailableField(x, y) {
             if (dist < closestDist) {
                 closestDist = dist;
                 closestRid = rid;
+                closestParent = thisNode;
+                closestFieldName = fieldName;
             }
         }
     }
-    return closestRid;
+    return [closestFieldName, closestRid, closestParent];
 }
 
 function setCursor(type) {
@@ -449,10 +471,6 @@ function render(delta) {
     let nodes = SCRIPT["operations"];
     for (let key in nodes) {
         let node = nodes[key];
-        let opcode = Id.fromString(node.opcode);
-        let group = window.blocks[opcode.namespace];
-        let definition = group[opcode.path];
-
         if (node.parent != null) continue;
 
         drawStack(key, node, node.x ?? 4, node.y ?? 4, 0);
@@ -469,11 +487,22 @@ function render(delta) {
         ctx.fillStyle = "red"
         ctx.fillRect(x - 1, y - 1, 3, 3)
 
-        let [inner, connectableRid, connectable] = getNearestConnectableNode(x, y)
-        if (connectable) {
-            let hb = inner ? hitboxes[connectableRid].innerPos : hitboxes[connectableRid].self
-            drawText("THIS ONE!!!!", hb[0], hb[1], inner ? [255, 0, 0] : [0, 255, 0], "top", "left")
+        let definition = lookupDefinition(grabbedNode);
+        if (definition.shape !== "input") {
+            let [inner, connectableRid, connectable] = getNearestConnectableNode(x, y)
+            if (connectable) {
+                let hb = inner ? hitboxes[connectableRid].innerPos : hitboxes[connectableRid].self
+                drawText("THIS ONE!!!!", hb[0], hb[1], inner ? [255, 0, 0] : [0, 255, 0], "top", "left")
+            }
+        } else {
+            // x + (grabbedBb[2] / 2), y + (grabbedBb[3] / 2)
+            let [fieldName, parentRid, parent] = getNearestAvailableField(mouseX, mouseY);
+            if (parent) {
+                let hb = hitboxes[parentRid].fields[fieldName]
+                drawText(fieldName, hb[0], hb[1], [0, 0, 255], "top", "left");
+            }
         }
+
     }
 
     let endFrame = performance.now();
@@ -511,7 +540,7 @@ function handleDragging() {
                 let argument = parent.args[argName];
                 if (argument[1] === grabbedNodeRid) {
                     argument[0] = true;
-                    argument[1] = null;
+                    argument[1] = "";
                     break;
                 }
             }
@@ -553,37 +582,54 @@ function resolveLastInStack(rid) {
     return [currentId, current];
 }
 
+function tryNodeConnect(grabbedBb) {
+    let [inner, connectableRid, connectable] = getNearestConnectableNode(grabbedBb[0], grabbedBb[1])
+    if (!connectable) return;
+
+    let [lastNodeRid, lastNode] = resolveLastInStack(grabbedNodeRid);
+    if (inner) {
+        let child = connectable.args.child;
+        let childRid = child[1];
+        if (childRid) {
+            let previousChild = lookupNode(childRid);
+            previousChild.parent = lastNodeRid;
+            lastNode.next = childRid;
+        }
+
+        grabbedNode.parent = connectableRid;
+        child[1] = grabbedNodeRid;
+    } else {
+        let previousRid = connectable.next;
+        let previous = lookupNode(previousRid);
+
+        grabbedNode.parent = connectableRid;
+        connectable.next = grabbedNodeRid;
+
+        lastNode.next = previousRid;
+        if (previous)
+            previous.parent = lastNodeRid;
+    }
+}
+
+function tryFieldInsert(grabbedBb) {
+    //let x = grabbedBb[0] + (grabbedBb[2] / 2);
+    //let y = grabbedBb[1] + (grabbedBb[3] / 2);
+    let [fieldName, parentRid, parent] = getNearestAvailableField(mouseX, mouseY);
+
+    if (!parent) return;
+
+    grabbedNode.parent = parentRid;
+    parent.args[fieldName] = [false, grabbedNodeRid];
+}
+
 function handleMouseUp(event) {
     if (grabbedNode && grabbedNode.parent == null) {
         let grabbedBb = hitboxes[grabbedNodeRid].self;
-        let [inner, connectableRid, connectable] = getNearestConnectableNode(grabbedBb[0], grabbedBb[1])
-
-        if (connectable) {
-            let [lastNodeRid, lastNode] = resolveLastInStack(grabbedNodeRid);
-            if (inner) {
-                let child = connectable.args.child;
-                let childRid = child[1];
-                if (childRid) {
-                    let previousChild = lookupNode(childRid);
-                    previousChild.parent = lastNodeRid;
-                    lastNode.next = childRid;
-                }
-
-                grabbedNode.parent = connectableRid;
-                child[1] = grabbedNodeRid;
-            } else {
-                let previousRid = connectable.next;
-                let previous = lookupNode(previousRid);
-
-                grabbedNode.parent = connectableRid;
-                connectable.next = grabbedNodeRid;
-
-                lastNode.next = previousRid;
-                if (previous) {
-                    previous.parent = lastNodeRid;
-                }
-
-            }
+        let shape = lookupDefinition(grabbedNode).shape;
+        if (shape === "input") {
+            tryFieldInsert(grabbedBb);
+        } else {
+            tryNodeConnect(grabbedBb)
         }
     }
 

@@ -17,3 +17,7 @@ canvas {
     font-smooth: never;
     -webkit-font-smoothing: none;
 }
+
+.popup-input {
+    position: absolute;
+}
