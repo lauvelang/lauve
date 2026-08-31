@@ -19,6 +19,7 @@ window.blockFont = null;
     const fontPromise = fontFace.load().then((font) => {
         document.fonts.add(font);
         window.blockFont = "18px " + font.family + ", monospace";
+        //window.blockFont = "18px monospace";
         console.log("Loaded font");
     });
 

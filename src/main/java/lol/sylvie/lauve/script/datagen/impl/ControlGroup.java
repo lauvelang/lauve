@@ -1,5 +1,6 @@
 package lol.sylvie.lauve.script.datagen.impl;
 
+import com.catppuccin.Palette;
 import lol.sylvie.lauve.script.datagen.BlockGroup;
 import lol.sylvie.lauve.script.datagen.definition.Definition;
 import lol.sylvie.lauve.script.datagen.definition.NodeShape;
@@ -13,14 +14,14 @@ import java.awt.*;
 // funny name
 public class ControlGroup extends BlockGroup {
     public ControlGroup() {
-        super("control", new Color(DyeColor.ORANGE.getTextColor()));
+        super("control", Palette.MOCHA.peach().components());
     }
 
     protected void defineConditional(Id id) {
         define(Definition.builder(id)
                 .hasChildren(true)
                 .label("control")
-                .input("conditional", InputPart.Controller.BOOLEAN)
+                .input("condition", InputPart.Controller.BOOLEAN)
                 .build());
     }
 

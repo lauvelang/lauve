@@ -1,4 +1,4 @@
-class Argument {
+/*class Argument {
     constructor(resolved, value) {
         this.resolved = resolved;
         this.value = value;
@@ -12,7 +12,7 @@ class Node {
         this.next = next;
         this.args = args;
     }
-}
+}*/
 
 const separator = ":";
 export class Id {
@@ -53,12 +53,28 @@ export const SCRIPT = {
             "parent": "lWYqMdh9HS"
         },
         "B1zZq3Mzus": {
+            "parent": "r6HviHTRMH",
+            "opcode": "variable:get",
+            "args": {
+                "key": [true, "i"]
+            }
+        },
+        "zN6GNNLLlo": {
+            "parent": "l4ka9cVHxW",
+            "opcode": "variable:get",
+            "args": {
+                "key": [true, "i"]
+            }
+        },
+        "GWwLx9zODB": {
+            "parent": "IT4q7XS2hj",
             "opcode": "variable:get",
             "args": {
                 "key": [true, "i"]
             }
         },
         "r6HviHTRMH": {
+            "parent": "0py3dYpjbj",
             "opcode": "condition:equals",
             "args": {
                 "first": [false, "B1zZq3Mzus"],
@@ -66,6 +82,7 @@ export const SCRIPT = {
             }
         },
         "0py3dYpjbj": {
+            "parent": "9oTLVGQ16B",
             "opcode": "condition:not",
             "args": {
                 "value": [false, "r6HviHTRMH"]
@@ -81,9 +98,10 @@ export const SCRIPT = {
             "next": "7YxHoPB139"
         },
         "l4ka9cVHxW": {
+            "parent": "lHh2WCQauc",
             "opcode": "math:add",
             "args": {
-                "first": [false, "B1zZq3Mzus"],
+                "first": [false, "zN6GNNLLlo"],
                 "second": [true, 1]
             }
         },
@@ -94,12 +112,13 @@ export const SCRIPT = {
                 "value": [false, "l4ka9cVHxW"],
                 "global": [true, false]
             },
+            "parent": "9oTLVGQ16B",
             "next": "IT4q7XS2hj"
         },
         "IT4q7XS2hj": {
             "opcode": "debug:log",
             "args": {
-                "text": [false, "B1zZq3Mzus"]
+                "text": [false, "GWwLx9zODB"]
             },
             "parent": "lHh2WCQauc"
         },
@@ -115,4 +134,10 @@ export const SCRIPT = {
 
 export function lookupNode(node) {
     return SCRIPT["operations"][node];
+}
+
+export function lookupDefinition(node) {
+    let opcode = Id.fromString(node.opcode);
+    let group = window.blocks[opcode.namespace];
+    return group[opcode.path]
 }

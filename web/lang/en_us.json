@@ -24,5 +24,11 @@
     "get": {
       "get": "value of"
     }
+  },
+  "math": {
+    "_name": "Math",
+    "add": {
+      "operand": "+"
+    }
   }
 }

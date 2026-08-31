@@ -17,9 +17,9 @@ public abstract class BlockGroup {
 
     private final String namespace;
     protected final File folder;
-    protected final Color color;
+    protected final int[] color;
 
-    protected BlockGroup(String namespace, Color color) {
+    protected BlockGroup(String namespace, int[] color) {
         this.namespace = namespace;
         this.color = color;
 
@@ -38,9 +38,9 @@ public abstract class BlockGroup {
         JsonObject root = new JsonObject();
 
         JsonArray color = new JsonArray();
-        color.add(this.color.getRed());
-        color.add(this.color.getGreen());
-        color.add(this.color.getBlue());
+        color.add(this.color[0]);
+        color.add(this.color[1]);
+        color.add(this.color[2]);
         root.add("color", color);
 
         this.init();

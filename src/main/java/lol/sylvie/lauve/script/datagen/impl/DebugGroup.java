@@ -1,5 +1,6 @@
 package lol.sylvie.lauve.script.datagen.impl;
 
+import com.catppuccin.Palette;
 import lol.sylvie.lauve.script.datagen.BlockGroup;
 import lol.sylvie.lauve.script.datagen.definition.Definition;
 import lol.sylvie.lauve.script.datagen.definition.part.InputPart;
@@ -11,7 +12,7 @@ import java.awt.*;
 
 public class DebugGroup extends BlockGroup {
     public DebugGroup() {
-        super("debug", new Color(DyeColor.PINK.getTextColor()));
+        super("debug", Palette.MOCHA.pink().components());
     }
 
     @Override

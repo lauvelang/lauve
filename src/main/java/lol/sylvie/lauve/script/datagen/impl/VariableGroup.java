@@ -1,5 +1,6 @@
 package lol.sylvie.lauve.script.datagen.impl;
 
+import com.catppuccin.Palette;
 import lol.sylvie.lauve.script.datagen.BlockGroup;
 import lol.sylvie.lauve.script.datagen.definition.Definition;
 import lol.sylvie.lauve.script.datagen.definition.NodeShape;
@@ -12,7 +13,7 @@ import java.util.List;
 
 public class VariableGroup extends BlockGroup {
     public VariableGroup() {
-        super("variable", new Color(DyeColor.PURPLE.getTextColor()));
+        super("variable", Palette.MOCHA.mauve().components());
     }
 
     @Override

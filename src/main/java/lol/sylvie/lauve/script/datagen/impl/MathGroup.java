@@ -1,5 +1,6 @@
 package lol.sylvie.lauve.script.datagen.impl;
 
+import com.catppuccin.Palette;
 import lol.sylvie.lauve.script.datagen.BlockGroup;
 import lol.sylvie.lauve.script.datagen.definition.Definition;
 import lol.sylvie.lauve.script.datagen.definition.NodeShape;
@@ -12,7 +13,7 @@ import java.awt.*;
 
 public class MathGroup extends BlockGroup {
     public MathGroup() {
-        super("math", new Color(DyeColor.RED.getTextColor()));
+        super("math", Palette.MOCHA.red().components());
     }
 
     private void defineDualOperand(Id id) {

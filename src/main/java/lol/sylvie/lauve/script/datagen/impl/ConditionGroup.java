@@ -1,5 +1,6 @@
 package lol.sylvie.lauve.script.datagen.impl;
 
+import com.catppuccin.Palette;
 import lol.sylvie.lauve.script.datagen.BlockGroup;
 import lol.sylvie.lauve.script.datagen.definition.Definition;
 import lol.sylvie.lauve.script.datagen.definition.NodeShape;
@@ -11,7 +12,7 @@ import java.awt.*;
 
 public class ConditionGroup extends BlockGroup {
     public ConditionGroup() {
-        super("condition", new Color(DyeColor.LIME.getTextColor()));
+        super("condition", Palette.MOCHA.green().components());
     }
 
     @Override
