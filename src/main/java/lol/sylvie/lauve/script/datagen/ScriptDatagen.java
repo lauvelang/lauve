@@ -12,11 +12,11 @@ import java.util.List;
 public class ScriptDatagen {
     static void main() {
         List<BlockGroup> blocks = List.of(
-                new DebugGroup(),
-                new VariableGroup(),
-                new ConditionGroup(),
                 new ControlGroup(),
-                new MathGroup()
+                new ConditionGroup(),
+                new MathGroup(),
+                new VariableGroup(),
+                new DebugGroup()
         );
 
         JsonObject root = new JsonObject();

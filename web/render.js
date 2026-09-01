@@ -14,7 +14,9 @@ function translate(id, name) {
 
 // Converts an RGB int array to a CSS string
 function toCss(color) {
-    return `rgb(${color[0]}, ${color[1]}, ${color[2]})`
+    let func = "rgb" + (color.length === 4 ? 'a' : '');
+
+    return func + "(" + color.join(", ") + ")"
 }
 
 const SHADING = 2;
@@ -48,17 +50,19 @@ function drawShadedRect(x, y, width, height, color, top = true, bottom = true, h
         ctx.fillRect(x, y + height - SHADING, width, SHADING);
 
         if (horizontalShading)
-            ctx.fillRect(x + width, y, SHADING, height);
+            ctx.fillRect(x + width - SHADING, y, SHADING, height);
     }
 }
 
 const TEXT = [30, 30, 46];
 // Draws text
-function drawText(text, x, y, color, baseline, alignment) {
+function drawText(text, x, y, color, baseline, alignment, smallFont = false) {
+    ctx.font = smallFont ? window.miniFont : window.blockFont;
     ctx.fillStyle = toCss(color);
     ctx.textBaseline = baseline ?? "top";
     ctx.textAlign = alignment ?? "left";
     ctx.fillText(text, x, y);
+    ctx.font = window.blockFont;
 }
 
 // How each node may connect with others
@@ -102,8 +106,10 @@ function drawConnectedRect(x, y, width, height, color, top, bottom, topOffset, b
 let renderCount = 0;
 let hitboxes = {};
 
+let logs = 0
 // Draw a node in the script format
-function drawNode(rid, node, x, y, immediatelyRender = true, z = 0) {
+function drawNode(rid, node, x, y, immediatelyRender, indented, toolbox = false) {
+    if (logs++ < 30 && rid.includes("load")) debugger;
     let opcode = Id.fromString(node.opcode);
     let group = window.blocks[opcode.namespace];
     let definition = group[opcode.path];
@@ -136,7 +142,7 @@ function drawNode(rid, node, x, y, immediatelyRender = true, z = 0) {
                 endX += textMetrics.width;
 
                 deferred.push(() => {
-                    drawText(translated, thisX, y + (height / 2), TEXT, "middle");
+                    drawText(translated, thisX, y + (height / 2), TEXT, "middle", "left");
                 })
 
                 let textHeight = textMetrics.actualBoundingBoxAscent + textMetrics.actualBoundingBoxDescent;
@@ -166,7 +172,7 @@ function drawNode(rid, node, x, y, immediatelyRender = true, z = 0) {
                     height = Math.max(height, thisHeight + (padding));
                 } else {
                     let node = lookupNode(value);
-                    let [aWidth, aHeight, commands, aOverlays] = drawNode(value, node, thisX, y, false, z + 1);
+                    let [aWidth, aHeight, commands, aOverlays] = drawNode(value, node, thisX, y, false, indented);
                     thisWidth += aWidth;
                     height = Math.max(height, aHeight);
                     overlays.push([value, height, commands]);
@@ -192,7 +198,7 @@ function drawNode(rid, node, x, y, immediatelyRender = true, z = 0) {
     if (hasChildren) {
         let firstChildRid = child[1]
         let firstChild = lookupNode(firstChildRid)
-        let [cWidth, cHeight] = drawStack(firstChildRid, firstChild, x + INDENT, y + height, z + 1);
+        let [cWidth, cHeight] = drawStack(firstChildRid, firstChild, x + INDENT, y + height, indented + INDENT);
         width = Math.max(width, cWidth + INDENT + xPad);
         childrenHeight = Math.max(MINIMUM_INPUT, cHeight);
     }
@@ -231,24 +237,29 @@ function drawNode(rid, node, x, y, immediatelyRender = true, z = 0) {
         deferred.unshift(renderBackground);
     }
 
-    height += (hasChildren ? childrenHeight + END_PART : 0);
+    height += (mayHaveChildren ? childrenHeight + END_PART : 0);
 
-    hitbox.z = z;
+    if (indented !== 0) hitbox.indented = indented;
     hitbox.self = [x, y, width, height];
-    hitboxes[rid] = hitbox;
+
+    if (toolbox) {
+        toolboxHitboxes["blocks"][rid] = hitbox;
+    } else {
+        hitboxes[rid] = hitbox;
+    }
 
     return [width, height, deferred, overlays];
 }
 
 // Draw a stack of nodes starting from one
-function drawStack(rid, node, x, y, z) {
+function drawStack(rid, node, x, y, indented = 0) {
     let width = 0;
     let height = 0
 
     let currentId = rid;
     let current = node;
     while (current != null) {
-        let [rWidth, rHeight] = drawNode(currentId, current, x, y + height, true, z);
+        let [rWidth, rHeight] = drawNode(currentId, current, x, y + height, true, indented);
         width = Math.max(width, rWidth);
         height += rHeight;
 
@@ -288,8 +299,6 @@ function getNodeAt(x, y) {
         let isInBox = pointInRect(x, y, selfHitbox[0], selfHitbox[1], selfHitbox[2], selfHitbox[3]);
         if (!isInBox) continue
 
-        ctx.fillText(hitbox.z, selfHitbox[0] + selfHitbox[2] + 64, selfHitbox[1])
-
         if (maxRc < hitbox.rc) {
             foundNodeRid = rid;
             foundHitbox = hitbox;
@@ -313,6 +322,10 @@ function getFieldAt(x, y, hitbox) {
 
 let mouseX = 0;
 let mouseY = 0;
+
+let worldMouseX = 0;
+let worldMouseY = 0;
+
 let grabbedNodeRid;
 let grabbedNode;
 let startGrabPos;
@@ -337,24 +350,13 @@ function getNearestConnectableNode(x, y) {
 
         let dist = Math.hypot(thisX - x, thisY - y);
 
-        ctx.fillStyle = "yellow"
-        ctx.fillRect(thisX - 1, thisY - 1, 3, 3)
-
         let innerPos = thisHitbox.innerPos;
         let innerDist = Infinity
         if (innerPos) {
-            ctx.fillStyle = "green"
-            ctx.fillRect(innerPos[0] - 1, innerPos[1] - 1, 3, 3)
-
             innerDist = Math.hypot(innerPos[0] - x, innerPos[1] - y)
-
-            ctx.fillText(innerDist.toFixed(1), innerPos[0], innerPos[1])
         }
 
         if (!SHAPES[thisDefinition.shape][1]) continue;
-
-        ctx.fillStyle = "white"
-        ctx.fillText(dist.toFixed(1), thisX, thisY)
 
         if (dist < closestDist && dist < DIST_LIMIT && y > thisY) {
             closestDist = dist;
@@ -383,7 +385,7 @@ function checkIfChild(parentRid, nodeRid) {
 
         let childRid = argValue[1];
         if (childRid === nodeRid) return true;
-``
+
         if (checkIfChild(childRid, nodeRid)) return true;
     }
     return false;
@@ -438,37 +440,141 @@ function setCursorUnlessGrabbing(type) {
     }
 }
 
-function handleHover() {
-    let [hitbox, rid, node] = getNodeAt(mouseX, mouseY);
-    hoveredNodeRid = rid;
-    hoveredNode = node;
+let hoveredToolboxItem;
 
-    if (hitbox != null) {
-        let [fieldHitbox, fieldName] = getFieldAt(mouseX, mouseY, hitbox);
-        hoveredField = fieldName;
-        if (fieldHitbox != null) {
-            setCursorUnlessGrabbing("text")
+function handleHover() {
+    if (mouseX > toolboxWidth) {
+        let [hitbox, rid, node] = getNodeAt(worldMouseX, worldMouseY);
+        hoveredNodeRid = rid;
+        hoveredNode = node;
+
+        if (hitbox != null) {
+            let [fieldHitbox, fieldName] = getFieldAt(worldMouseX, worldMouseY, hitbox);
+            hoveredField = fieldName;
+            if (fieldHitbox != null) {
+                setCursorUnlessGrabbing("text")
+            } else {
+                setCursorUnlessGrabbing("grab")
+            }
         } else {
-            setCursorUnlessGrabbing("grab")
+            setCursorUnlessGrabbing("default")
         }
     } else {
-        setCursorUnlessGrabbing("default")
+        let opcode = getToolboxId(mouseX, mouseY);
+        hoveredToolboxItem = opcode;
+        if (opcode) {
+            setCursorUnlessGrabbing("grab")
+        } else {
+            setCursorUnlessGrabbing("default")
+        }
     }
+
+
 }
 
 let hoveredNodeRid;
 let hoveredNode;
 let hoveredField;
+
+const TOOLBOX_BUTTON_COLUMN_WIDTH = 80;
+let cameraOffset = [TOOLBOX_BUTTON_COLUMN_WIDTH, 0];
+
+function getToolboxId(x, y) {
+    let blockHitboxes = toolboxHitboxes["blocks"];
+    for (let opcode in blockHitboxes) {
+        let hb = blockHitboxes[opcode].self;
+
+        if (pointInRect(x, y, hb[0], hb[1], hb[2], hb[3])) {
+            return opcode;
+        }
+    }
+}
+
+const TOOLBOX_ICON_SIZE = 30;
+const MARGIN = 28;
+let toolboxWidth = 384;
+let toolboxGroup = null;
+let toolboxHitboxes = {"groups": {}, "blocks": {}};
+let defaultNodes = {}
+let hoveredGroup;
+function renderToolbox() {
+    if (toolboxWidth === 0) {
+        return
+    }
+
+    toolboxHitboxes = {"groups": {}, "blocks": {}};
+
+    ctx.fillStyle = "rgba(24, 24, 37)";
+    ctx.fillRect(0, 0, toolboxWidth, canvas.height);
+
+    let middleOfColumn = TOOLBOX_BUTTON_COLUMN_WIDTH / 2 - (TOOLBOX_ICON_SIZE / 2);
+    let x = middleOfColumn;
+    let y = middleOfColumn;
+    let halfMargin = TOOLBOX_ICON_SIZE / 2;
+    hoveredGroup = null
+    for (let groupId in window.blocks) {
+        let group = window.blocks[groupId];
+        let deselected = toolboxGroup !== groupId;
+
+        let inset = deselected ? 4 : 0;
+        let hitbox = [0, y - halfMargin, TOOLBOX_BUTTON_COLUMN_WIDTH, TOOLBOX_ICON_SIZE + halfMargin + inset];
+        let hovered = pointInRect(mouseX, mouseY, hitbox[0], hitbox[1], hitbox[2], hitbox[3]);
+
+        ctx.fillStyle = toCss(group.color);
+        ctx.fillRect(x + inset, y + inset, TOOLBOX_ICON_SIZE - (inset * 2), TOOLBOX_ICON_SIZE - (inset * 2));
+
+        let groupName = window.translations[groupId]?.["_name"] ?? groupId;
+        drawText(groupName, x + (TOOLBOX_ICON_SIZE / 2), y + TOOLBOX_ICON_SIZE + 4 - inset, group.color, "top", "center", true)
+
+        toolboxHitboxes["groups"][groupId] = hitbox
+
+        if (hovered) {
+            hoveredGroup = groupId;
+            setCursorUnlessGrabbing("pointer")
+
+        }
+
+        y += TOOLBOX_ICON_SIZE + MARGIN - inset;
+    }
+
+    let groupNodes = defaultNodes[toolboxGroup];
+    let nodeX = TOOLBOX_BUTTON_COLUMN_WIDTH + middleOfColumn;
+    y = middleOfColumn;
+    toolboxWidth = TOOLBOX_BUTTON_COLUMN_WIDTH;
+    for (let key in groupNodes) {
+        let node = groupNodes[key]
+
+        let [nWidth, nHeight, _, __] = drawNode(toolboxGroup + ":" + key, node, nodeX, y, true, 0, true);
+        ctx.fillRect(nodeX - 2, y, 2, nHeight)
+
+        toolboxWidth = Math.max(toolboxWidth, TOOLBOX_BUTTON_COLUMN_WIDTH + nWidth + (middleOfColumn * 2));
+
+        y += nHeight;
+        y += 24;
+    }
+
+    ctx.fillStyle = "#1e1e2e";
+    ctx.fillRect(TOOLBOX_BUTTON_COLUMN_WIDTH, 0, 2, canvas.height);
+
+    ctx.fillStyle = "#1e1e2e";
+    ctx.fillRect(toolboxWidth, 0, 2, canvas.height);
+}
+
 function render(delta) {
     let beginFrame = performance.now();
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Keep canvas the same size as the window
     setBaseCanvasProperties()
 
     // Render nodes
+    ctx.save();
+    ctx.translate(cameraOffset[0], cameraOffset[1]);
+
     hitboxes = {};
     let nodes = SCRIPT["operations"];
+
     for (let key in nodes) {
         let node = nodes[key];
         if (node.parent != null) continue;
@@ -484,31 +590,45 @@ function render(delta) {
         let grabbedBb = grabbedHitbox.self;
         let [x, y] = [grabbedBb[0], grabbedBb[1]];
 
-        ctx.fillStyle = "red"
-        ctx.fillRect(x - 1, y - 1, 3, 3)
-
         let definition = lookupDefinition(grabbedNode);
         if (definition.shape !== "input") {
             let [inner, connectableRid, connectable] = getNearestConnectableNode(x, y)
             if (connectable) {
-                let hb = inner ? hitboxes[connectableRid].innerPos : hitboxes[connectableRid].self
-                drawText("THIS ONE!!!!", hb[0], hb[1], inner ? [255, 0, 0] : [0, 255, 0], "top", "left")
+                let hb =  hitboxes[connectableRid];
+                let pos = inner ? [hb.innerPos[0] - INDENT, hb.innerPos[1]] : hb.self;
+
+                let x = pos[0] - (hb.indented ?? 0) - 4;
+                let y = inner ? pos[1] : pos[1] + pos[3];
+
+                drawText("→", x, y + 1, [30, 30, 46], "middle", "right")
+                drawText("→", x, y - 1, [205, 214, 244], "middle", "right")
             }
         } else {
-            // x + (grabbedBb[2] / 2), y + (grabbedBb[3] / 2)
-            let [fieldName, parentRid, parent] = getNearestAvailableField(mouseX, mouseY);
+            let [fieldName, parentRid, parent] = getNearestAvailableField(worldMouseX, worldMouseY);
             if (parent) {
                 let hb = hitboxes[parentRid].fields[fieldName]
-                drawText(fieldName, hb[0], hb[1], [0, 0, 255], "top", "left");
+
+                ctx.strokeStyle = "rgba(17, 17, 27, 0.6)";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(hb[0], hb[1], hb[2], hb[3]);
+
+                //drawText(fieldName, hb[0], hb[1], [0, 0, 255], "top", "left");
             }
         }
 
     }
 
+    ctx.restore();
+
+    renderToolbox();
+
     let endFrame = performance.now();
 
-    drawText(`${(delta - lastDelta).toFixed(1)}ms (synced)`, canvas.width - 4, 4, [205, 214, 244], "top", "right")
+    drawText(`${(delta - lastDelta).toFixed(1)}ms (vsync)`, canvas.width - 4, 4, [205, 214, 244], "top", "right")
     drawText(`${(endFrame - beginFrame).toFixed(1)}ms (frametime)`, canvas.width - 4, 22, [205, 214, 244], "top", "right")
+
+    drawText(`c: ${cameraOffset}`, canvas.width - 4, 40, [205, 214, 244], "top", "right")
+
 
     lastDelta = delta;
 
@@ -554,21 +674,115 @@ function handleMouseMove(event) {
     mouseX = event.clientX;
     mouseY = event.clientY;
 
+    if (draggingCamera) {
+        let offset = [mouseX - cameraMouseStart[0], mouseY - cameraMouseStart[1]];
+        cameraOffset = [cameraDragOrigin[0] + offset[0], cameraDragOrigin[1] + offset[1]];
+    }
+
+    worldMouseX = mouseX - cameraOffset[0]
+    worldMouseY = mouseY - cameraOffset[1]
+
     if (grabbedNode) {
         handleDragging()
     }
 }
 
+let fieldInput
+function stopFieldInput(node, field) {
+    node.args[field][1] = fieldInput.value;
+    fieldInput.remove();
+}
+
+function startFieldInput() {
+    fieldInput = document.createElement("input");
+    fieldInput.classList.add("popup-input");
+
+    let fieldBb = hitboxes[hoveredNodeRid].fields[hoveredField];
+
+    let field = hoveredField;
+    let node = hoveredNode;
+
+    fieldInput.value = node.args[hoveredField][1];
+
+    fieldInput.style.left = fieldBb[0] + cameraOffset[0] + "px";
+    fieldInput.style.top = fieldBb[1] + cameraOffset[1] + "px";
+    fieldInput.style.width = fieldBb[2] + "px";
+    fieldInput.style.height = fieldBb[3] + "px";
+
+    document.body.appendChild(fieldInput);
+
+    fieldInput.addEventListener("blur", () => {stopFieldInput(node, field)});
+    fieldInput.addEventListener("keyup", e => {
+        if (e.key === 'Enter') stopFieldInput(node);
+    });
+
+    fieldInput.focus();
+    fieldInput.select();
+}
+
+function generateRandomRid() {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    for ( let i = 0; i < 10; i++ ) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
+
+let draggingCamera = false;
+let cameraDragOrigin = [0, 0]
+let cameraMouseStart = [0, 0];
+function startGrabbing(node, nodeRid, origin) {
+    grabbedNode = node;
+    grabbedNodeRid = nodeRid;
+    startGrabPos = [node.x ?? 0, node.y ?? 0];
+    grabOrigin = origin;
+}
+
 function handleMouseDown(event) {
-    if (hoveredField) {
-        console.log(hoveredField);
-    } else {
-        if (hoveredNode) {
-            grabbedNode = hoveredNode;
-            grabbedNodeRid = hoveredNodeRid;
-            startGrabPos = [hoveredNode.x ?? 0, hoveredNode.y ?? 0];
-            grabOrigin = [event.clientX, event.clientY];
+    if (event.clientX < toolboxWidth && event.button === 0) {
+        let groupHitboxes = toolboxHitboxes["groups"];
+        for (let groupName in groupHitboxes) {
+            let hb = groupHitboxes[groupName];
+            if (pointInRect(event.clientX, event.clientY, hb[0], hb[1], hb[2], hb[3])) {
+                if (toolboxGroup === groupName) toolboxGroup = null
+                else toolboxGroup = groupName;
+                return;
+            }
         }
+
+        if (hoveredToolboxItem) {
+            let id = Id.fromString(hoveredToolboxItem);
+            let newNode = window.structuredClone(defaultNodes[id.namespace][id.path]);
+
+            let hb = toolboxHitboxes["blocks"][hoveredToolboxItem].self;
+            newNode.x = hb[0] - cameraOffset[0];
+            newNode.y = hb[1] - cameraOffset[1];
+
+            let rid = generateRandomRid();
+
+            SCRIPT["operations"][rid] = newNode;
+            startGrabbing(newNode, rid, [event.clientX, event.clientY]);
+        }
+
+
+        return;
+    }
+
+    if (event.button === 0 && hoveredNode) {
+        if (draggingCamera) return
+        if (hoveredField) {
+            if (fieldInput) fieldInput.blur();
+            startFieldInput();
+            event.preventDefault();
+        } else {
+            if (hoveredNode) startGrabbing(hoveredNode, hoveredNodeRid, [event.clientX, event.clientY]);
+        }
+    } else if (!grabbedNode) {
+        cameraMouseStart = [mouseX, mouseY];
+        cameraDragOrigin = [cameraOffset[0], cameraOffset[1]];
+        draggingCamera = true;
     }
 }
 
@@ -612,9 +826,7 @@ function tryNodeConnect(grabbedBb) {
 }
 
 function tryFieldInsert(grabbedBb) {
-    //let x = grabbedBb[0] + (grabbedBb[2] / 2);
-    //let y = grabbedBb[1] + (grabbedBb[3] / 2);
-    let [fieldName, parentRid, parent] = getNearestAvailableField(mouseX, mouseY);
+    let [fieldName, parentRid, parent] = getNearestAvailableField(worldMouseX, worldMouseY);
 
     if (!parent) return;
 
@@ -622,25 +834,105 @@ function tryFieldInsert(grabbedBb) {
     parent.args[fieldName] = [false, grabbedNodeRid];
 }
 
-function handleMouseUp(event) {
-    if (grabbedNode && grabbedNode.parent == null) {
-        let grabbedBb = hitboxes[grabbedNodeRid].self;
-        let shape = lookupDefinition(grabbedNode).shape;
-        if (shape === "input") {
-            tryFieldInsert(grabbedBb);
-        } else {
-            tryNodeConnect(grabbedBb)
+function eraseNode(node, nodeRid) {
+    let current = node;
+    let currentRid = nodeRid;
+    while (current != null) {
+        let child = node.args["child"];
+        if (child && child[1] !== null) {
+            let rid = child[1];
+            eraseNode(lookupNode(rid), rid);
         }
+
+        delete SCRIPT["operations"][currentRid];
+
+        currentRid = node.next
+        current = lookupNode(currentRid);
+    }
+}
+
+function handleMouseUp(event) {
+    if (event.button === 0) {
+        if (grabbedNode && grabbedNode.parent == null) {
+            if (mouseX < toolboxWidth) {
+                eraseNode(grabbedNode, grabbedNodeRid);
+            } else {
+                let grabbedBb = hitboxes[grabbedNodeRid].self;
+                let shape = lookupDefinition(grabbedNode).shape;
+                if (shape === "input") {
+                    tryFieldInsert(grabbedBb);
+                } else {
+                    tryNodeConnect(grabbedBb)
+                }
+            }
+        }
+
+        grabbedNodeRid = null;
+        grabbedNode = null;
     }
 
-    grabbedNodeRid = null;
-    grabbedNode = null;
+    draggingCamera = false;
+
+}
+
+function handleContextMenu(event) {
+    event.preventDefault();
+}
+
+function generateDefaultNodes() {
+    for (let groupId in window.blocks) {
+        let group = window.blocks[groupId];
+        defaultNodes[groupId] = [];
+
+        for (let path in group) {
+            let value = group[path];
+            if (path === "color") continue;
+
+            let opcodeId = new Id(groupId, path).toString();
+            let node = { "opcode": opcodeId, "args": {} };
+
+            let description = value['description'];
+            for (let item of description) {
+                if (item.type !== "input") continue
+
+                node["args"][item.id] = [true, item.sample ?? ""]
+            }
+
+            if (value['has_children']) {
+                node["args"]["child"] = [true, null]
+            }
+
+            defaultNodes[groupId][path] = node;
+        }
+    }
 }
 
 export function initRenderer() {
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('mouseup', handleMouseUp)
+    canvas.addEventListener('mouseup', handleMouseUp);
+    canvas.addEventListener('contextmenu', handleContextMenu);
+
+    window.addEventListener("error", event => {
+        alert(event.message)
+    })
+
+    document.addEventListener('keydown', e => {
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+
+            const fileName = "script.json";
+            const content = JSON.stringify(SCRIPT);
+            const file = new Blob([content], {type: 'text/plain'});
+
+            const button = document.createElement("a");
+            button.setAttribute("href", window.URL.createObjectURL(file));
+            button.setAttribute("download", fileName);
+            button.click();
+        }
+    });
+
+    generateDefaultNodes();
 
     requestAnimationFrame(render);
 }

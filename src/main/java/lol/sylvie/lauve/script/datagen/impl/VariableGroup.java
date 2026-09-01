@@ -22,7 +22,7 @@ public class VariableGroup extends BlockGroup {
                 .label("set")
                 .input("key", InputPart.Controller.VARIABLE)
                 .label("to")
-                .input("value", InputPart.Controller.ANY)
+                .input("value", InputPart.Controller.ANY, "0")
                 .option("scope", List.of("local", "global"))
                 .build());
 

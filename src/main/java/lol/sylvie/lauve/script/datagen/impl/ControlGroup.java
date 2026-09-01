@@ -21,7 +21,7 @@ public class ControlGroup extends BlockGroup {
         define(Definition.builder(id)
                 .hasChildren(true)
                 .label("control")
-                .input("condition", InputPart.Controller.BOOLEAN)
+                .input("condition", InputPart.Controller.BOOLEAN, "true")
                 .build());
     }
 

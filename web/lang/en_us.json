@@ -6,10 +6,13 @@
     },
     "while": {
       "control": "while"
+    },
+    "if": {
+      "control": "if"
     }
   },
   "debug": {
-    "_name": "Debugging",
+    "_name": "Debug",
     "log": {
       "log": "log",
       "destination": "to console"
@@ -29,6 +32,22 @@
     "_name": "Math",
     "add": {
       "operand": "+"
+    },
+    "subtract": {
+      "operand": "-"
+    },
+    "divide": {
+      "operand": "÷"
+    },
+    "multiply": {
+      "operand": "×"
+    },
+    "random_number": {
+      "generate": "random number",
+      "to": "to"
     }
+  },
+  "condition": {
+    "_name": "Condition"
   }
 }

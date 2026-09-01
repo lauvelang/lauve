@@ -40,7 +40,9 @@ export const SCRIPT = {
         "lWYqMdh9HS": {
             "opcode": "control:load",
             "args": {},
-            "next": "LSRvYa31tF"
+            "next": "LSRvYa31tF",
+            "x": 32,
+            "y": 32,
         },
         "LSRvYa31tF": {
             "opcode": "variable:set",

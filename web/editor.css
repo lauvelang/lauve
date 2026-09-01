@@ -20,4 +20,13 @@ canvas {
 
 .popup-input {
     position: absolute;
+    box-sizing: border-box;
+    outline: none;
+    border: none;
+
+    background: #cdd6f4;
+    color: #11111b;
+    font-family: "Monocraft", monospace;
+    text-align: center;
+    font-size: 18px;
 }

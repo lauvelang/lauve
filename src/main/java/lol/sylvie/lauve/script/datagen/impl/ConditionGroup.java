@@ -19,9 +19,9 @@ public class ConditionGroup extends BlockGroup {
     public void init() {
         define(Definition.builder(id("equals"))
                 .shape(NodeShape.INPUT)
-                .input("first", InputPart.Controller.ANY)
+                .input("first", InputPart.Controller.ANY, "2")
                 .label("equals")
-                .input("second", InputPart.Controller.ANY)
+                .input("second", InputPart.Controller.ANY, "2")
                 .build());
 
         define(Definition.builder(id("not"))

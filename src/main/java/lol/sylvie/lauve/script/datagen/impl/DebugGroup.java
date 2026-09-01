@@ -19,7 +19,7 @@ public class DebugGroup extends BlockGroup {
     public void init() {
         define(Definition.builder(id("log"))
                 .label("log")
-                .input("text", InputPart.Controller.STRING)
+                .input("text", InputPart.Controller.STRING, "Hello, world!")
                 .label("destination")
                 .build());
     }

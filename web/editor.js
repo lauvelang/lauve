@@ -3,6 +3,7 @@ import { initRenderer } from './render.js';
 window.blocks = null;
 window.translations = null;
 window.blockFont = null;
+window.miniFont = null;
 
 (async () => {
     const blockPromise = fetch("/blocks.json").then((response) => response.json()).then((data) => {
@@ -18,7 +19,9 @@ window.blockFont = null;
     const fontFace = new FontFace('Monocraft', 'url(https://cdn.jsdelivr.net/gh/IdreesInc/Monocraft@main/dist/Monocraft-ttf/Monocraft.ttf)');
     const fontPromise = fontFace.load().then((font) => {
         document.fonts.add(font);
-        window.blockFont = "18px " + font.family + ", monospace";
+        let family = font.family + ", monospace";
+        window.blockFont = "18px " + family;
+        window.miniFont = "9px " + family;
         //window.blockFont = "18px monospace";
         console.log("Loaded font");
     });

@@ -19,9 +19,9 @@ public class MathGroup extends BlockGroup {
     private void defineDualOperand(Id id) {
         define(Definition.builder(id)
                 .shape(NodeShape.INPUT)
-                .input("first", InputPart.Controller.NUMBER)
+                .input("first", InputPart.Controller.NUMBER, "2")
                 .label("operand")
-                .input("second", InputPart.Controller.NUMBER)
+                .input("second", InputPart.Controller.NUMBER, "2")
                 .build());
     }
 
@@ -35,9 +35,9 @@ public class MathGroup extends BlockGroup {
         define(Definition.builder(id("random_number"))
                 .shape(NodeShape.INPUT)
                 .label("generate")
-                .input("origin", InputPart.Controller.NUMBER)
+                .input("origin", InputPart.Controller.NUMBER, "1")
                 .label("to")
-                .input("bound", InputPart.Controller.NUMBER)
+                .input("bound", InputPart.Controller.NUMBER, "10")
                 .build());
     }
 }
