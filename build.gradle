@@ -24,7 +24,7 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	//implementation "lol.sylvie.lauve.events:lauve-events:${project.lauve_events_version}"
+	implementation "lol.sylvie.lauve.events:lauve-events:${project.lauve_events_version}"
 
 	implementation "com.catppuccin:catppuccin-palette:2.0.3"
 }
