@@ -39,5 +39,11 @@ public class MathGroup extends BlockGroup {
                 .label("to")
                 .input("bound", InputPart.Controller.NUMBER, "10")
                 .build());
+
+        define(Definition.builder(id("round"))
+                .shape(NodeShape.INPUT)
+                .label("round")
+                .input("value", InputPart.Controller.NUMBER, "1.5")
+                .build());
     }
 }

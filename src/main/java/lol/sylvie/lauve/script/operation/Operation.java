@@ -5,6 +5,7 @@ import lol.sylvie.lauve.script.runtime.script.Argument;
 import lol.sylvie.lauve.script.runtime.script.Node;
 import lol.sylvie.lauve.util.Id;
 import lol.sylvie.lauve.util.IdentifiedObject;
+import lol.sylvie.lauve.util.TypeCoercion;
 import lol.sylvie.lauve.util.Types;
 import lombok.Getter;
 
@@ -21,6 +22,7 @@ public abstract class Operation extends IdentifiedObject {
     }
 
     protected static Object object(Context context, Argument argument) {
+        if (argument == null) return null;
         if (argument.isComputed()) {
             return argument.computed();
         }
@@ -40,15 +42,15 @@ public abstract class Operation extends IdentifiedObject {
     }
 
     protected static String string(Context context, Map<String, Argument> args, String key) {
-        return Types.asString(object(context, args, key));
+        return TypeCoercion.toString(object(context, args, key));
     }
 
     protected static Double number(Context context, Map<String, Argument> args, String key) {
-        return Types.asNumber(object(context, args, key));
+        return TypeCoercion.toNumber(object(context, args, key));
     }
 
     protected static Boolean bool(Context context, Map<String, Argument> args, String key) {
-        return Types.asBool(object(context, args, key));
+        return TypeCoercion.toBool(object(context, args, key));
     }
 
     public abstract Object operate(Context context, Node node, Map<String, Argument> args);

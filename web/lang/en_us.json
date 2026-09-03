@@ -48,6 +48,15 @@
     }
   },
   "condition": {
-    "_name": "Condition"
+    "_name": "Condition",
+    "equals": {
+      "operand": "="
+    },
+    "less_than": {
+      "operand": "<"
+    },
+    "greater_than": {
+      "operand": ">"
+    }
   }
 }

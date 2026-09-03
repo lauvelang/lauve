@@ -2,6 +2,7 @@ package lol.sylvie.lauve.script.runtime.script;
 
 import com.google.gson.JsonObject;
 import lol.sylvie.lauve.util.Constants;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.io.File;
@@ -13,6 +14,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 public class Script {
+    @Getter
     private final File file;
 
     private final HashMap<String, Node> operationNodes = new HashMap<>();

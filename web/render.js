@@ -2,7 +2,7 @@
  * im so sorry for the code you are about to read
  * this is evil bodged javascript
  */
-import {Id, SCRIPT, lookupNode, lookupDefinition} from "./state.js";
+import {Id, lookupDefinition, lookupNode, replaceScript, SCRIPT} from "./state.js";
 
 const canvas = document.getElementById("workspace-canvas");
 const ctx = canvas.getContext("2d");
@@ -109,7 +109,6 @@ let hitboxes = {};
 let logs = 0
 // Draw a node in the script format
 function drawNode(rid, node, x, y, immediatelyRender, indented, toolbox = false) {
-    if (logs++ < 30 && rid.includes("load")) debugger;
     let opcode = Id.fromString(node.opcode);
     let group = window.blocks[opcode.namespace];
     let definition = group[opcode.path];
@@ -505,7 +504,10 @@ function renderToolbox() {
     toolboxHitboxes = {"groups": {}, "blocks": {}};
 
     ctx.fillStyle = "rgba(24, 24, 37)";
-    ctx.fillRect(0, 0, toolboxWidth, canvas.height);
+    ctx.fillRect(0, 0, TOOLBOX_BUTTON_COLUMN_WIDTH, canvas.height);
+
+    ctx.fillStyle = "rgba(24, 24, 37, 0.5)";
+    ctx.fillRect(TOOLBOX_BUTTON_COLUMN_WIDTH, 0, toolboxWidth - TOOLBOX_BUTTON_COLUMN_WIDTH, canvas.height);
 
     let middleOfColumn = TOOLBOX_BUTTON_COLUMN_WIDTH / 2 - (TOOLBOX_ICON_SIZE / 2);
     let x = middleOfColumn;
@@ -622,6 +624,11 @@ function render(delta) {
 
     renderToolbox();
 
+    if (mouseX < toolboxWidth && grabbedNode) {
+        setCursor("no-drop")
+    }
+
+
     let endFrame = performance.now();
 
     drawText(`${(delta - lastDelta).toFixed(1)}ms (vsync)`, canvas.width - 4, 4, [205, 214, 244], "top", "right")
@@ -713,7 +720,7 @@ function startFieldInput() {
 
     fieldInput.addEventListener("blur", () => {stopFieldInput(node, field)});
     fieldInput.addEventListener("keyup", e => {
-        if (e.key === 'Enter') stopFieldInput(node);
+        if (e.key === 'Enter') stopFieldInput(node, field);
     });
 
     fieldInput.focus();
@@ -917,18 +924,39 @@ export function initRenderer() {
         alert(event.message)
     })
 
-    document.addEventListener('keydown', e => {
-        if (e.ctrlKey && e.key === 's') {
-            e.preventDefault();
+    document.addEventListener('keydown', async (e) => {
+        if (e.ctrlKey) {
+            if (e.key === 's') {
+                const fileName = "script.json";
+                const content = JSON.stringify(SCRIPT);
+                const file = new Blob([content], {type: 'text/plain'});
 
-            const fileName = "script.json";
-            const content = JSON.stringify(SCRIPT);
-            const file = new Blob([content], {type: 'text/plain'});
+                const button = document.createElement("a");
+                button.setAttribute("href", window.URL.createObjectURL(file));
+                button.setAttribute("download", fileName);
+                button.click();
+                e.preventDefault();
+            } else if (e.key === 'l') {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.onchange = e => {
+                    let file = e.target.files[0]
+                    let reader = new FileReader();
+                    reader.readAsText(file,'UTF-8');
 
-            const button = document.createElement("a");
-            button.setAttribute("href", window.URL.createObjectURL(file));
-            button.setAttribute("download", fileName);
-            button.click();
+                    reader.onload = readerEvent => {
+                        try {
+                            let data = JSON.parse(readerEvent.target.result);
+                            replaceScript(data);
+                            cameraOffset = [0, 0]
+                        } catch (e) {
+                            throw e;
+                        }
+                    }
+                };
+                input.click();
+                e.preventDefault();
+            }
         }
     });
 

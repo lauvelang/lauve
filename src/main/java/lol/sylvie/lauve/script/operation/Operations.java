@@ -2,6 +2,8 @@ package lol.sylvie.lauve.script.operation;
 
 //import lol.sylvie.lauve.script.operation.impl.control.SetupOperation;
 import lol.sylvie.lauve.script.operation.impl.condition.EqualsOperation;
+import lol.sylvie.lauve.script.operation.impl.condition.GreaterThanOperation;
+import lol.sylvie.lauve.script.operation.impl.condition.LessThanOperation;
 import lol.sylvie.lauve.script.operation.impl.condition.NotOperation;
 import lol.sylvie.lauve.script.operation.impl.control.IfOperation;
 import lol.sylvie.lauve.script.operation.impl.control.LoadOperation;
@@ -42,10 +44,13 @@ public class Operations {
         register(DivideOperation::new);
 
         register(RandomNumberOperation::new);
+        register(RoundOperation::new);
 
         // Conditions
         register(NotOperation::new);
         register(EqualsOperation::new);
+        register(LessThanOperation::new);
+        register(GreaterThanOperation::new);
 
         // Variables
         register(SetOperation::new);

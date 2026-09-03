@@ -35,103 +35,38 @@ export class Id {
     }
 }
 
-export const SCRIPT = {
-    "operations": {
-        "lWYqMdh9HS": {
-            "opcode": "control:load",
-            "args": {},
-            "next": "LSRvYa31tF",
-            "x": 32,
-            "y": 32,
-        },
-        "LSRvYa31tF": {
-            "opcode": "variable:set",
-            "args": {
-                "key": [true, "i"],
-                "value": [true, 0],
-                "global": [true, false]
-            },
-            "next": "9oTLVGQ16B",
-            "parent": "lWYqMdh9HS"
-        },
-        "B1zZq3Mzus": {
-            "parent": "r6HviHTRMH",
-            "opcode": "variable:get",
-            "args": {
-                "key": [true, "i"]
-            }
-        },
-        "zN6GNNLLlo": {
-            "parent": "l4ka9cVHxW",
-            "opcode": "variable:get",
-            "args": {
-                "key": [true, "i"]
-            }
-        },
-        "GWwLx9zODB": {
-            "parent": "IT4q7XS2hj",
-            "opcode": "variable:get",
-            "args": {
-                "key": [true, "i"]
-            }
-        },
-        "r6HviHTRMH": {
-            "parent": "0py3dYpjbj",
-            "opcode": "condition:equals",
-            "args": {
-                "first": [false, "B1zZq3Mzus"],
-                "second": [true, 10]
-            }
-        },
-        "0py3dYpjbj": {
-            "parent": "9oTLVGQ16B",
-            "opcode": "condition:not",
-            "args": {
-                "value": [false, "r6HviHTRMH"]
-            }
-        },
-        "9oTLVGQ16B": {
-            "opcode": "control:while",
-            "args": {
-                "condition": [false, "0py3dYpjbj"],
-                "child": [true, "lHh2WCQauc"]
-            },
-            "parent": "LSRvYa31tF",
-            "next": "7YxHoPB139"
-        },
-        "l4ka9cVHxW": {
-            "parent": "lHh2WCQauc",
-            "opcode": "math:add",
-            "args": {
-                "first": [false, "zN6GNNLLlo"],
-                "second": [true, 1]
-            }
-        },
-        "lHh2WCQauc": {
-            "opcode": "variable:set",
-            "args": {
-                "key": [true, "i"],
-                "value": [false, "l4ka9cVHxW"],
-                "global": [true, false]
-            },
-            "parent": "9oTLVGQ16B",
-            "next": "IT4q7XS2hj"
-        },
-        "IT4q7XS2hj": {
-            "opcode": "debug:log",
-            "args": {
-                "text": [false, "GWwLx9zODB"]
-            },
-            "parent": "lHh2WCQauc"
-        },
-        "7YxHoPB139": {
-            "opcode": "debug:log",
-            "args": {
-                "text": [true, "done"]
-            },
-            "parent": "9oTLVGQ16B"
-        }
-    }
+const SCRIPT_KEY = "last_script";
+export let SCRIPT = {
+    "operations": {}
+}
+
+let lastScript = JSON.parse(localStorage.getItem(SCRIPT_KEY) ?? "{}");
+if (lastScript && lastScript["operations"]) {
+    SCRIPT = lastScript;
+}
+
+function autosave() {
+    console.log("Saved script!");
+    console.log(SCRIPT)
+    localStorage.setItem(SCRIPT_KEY, JSON.stringify(SCRIPT));
+}
+
+window.as = autosave;
+
+window.addEventListener('beforeunload', function() {
+    console.log("before unload")
+    autosave()
+});
+
+setInterval(autosave, 60 * 5 * 1000);
+
+window.addEventListener("error", function () {
+    localStorage.setItem("backup_last_script", localStorage.getItem(SCRIPT_KEY))
+    localStorage.removeItem(SCRIPT_KEY)
+})
+
+export function replaceScript(data) {
+    SCRIPT = data;
 }
 
 export function lookupNode(node) {

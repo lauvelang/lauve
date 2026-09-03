@@ -4,21 +4,20 @@ import lol.sylvie.lauve.script.operation.Operation;
 import lol.sylvie.lauve.script.runtime.interpreter.Context;
 import lol.sylvie.lauve.script.runtime.script.Argument;
 import lol.sylvie.lauve.script.runtime.script.Node;
-import lol.sylvie.lauve.util.Types;
+import lol.sylvie.lauve.util.Id;
+import lol.sylvie.lauve.util.TypeCoercion;
 
 import java.util.Map;
 
-public class DivideOperation extends Operation {
-    public DivideOperation() {
-        super("divide");
+public class RoundOperation extends Operation {
+    public RoundOperation() {
+        super("round");
     }
 
     @Override
     public Object operate(Context context, Node node, Map<String, Argument> args) {
-        double first = number(context, args, "first");
-        double second = number(context, args, "second");
-        if (second == 0) return Double.MAX_VALUE;
+        double value = number(context, args, "value");
 
-        return first / second;
+        return Math.round(value);
     }
 }

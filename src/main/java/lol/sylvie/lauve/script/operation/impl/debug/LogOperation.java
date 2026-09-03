@@ -14,7 +14,7 @@ public class LogOperation extends Operation {
 
     @Override
     public Object operate(Context context, Node node, Map<String, Argument> args) {
-        System.out.println(string(context, args, "text"));
+        context.log(string(context, args, "text"));
         return null;
     }
 }
