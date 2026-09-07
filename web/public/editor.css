@@ -1,0 +1,75 @@
+:root {
+    --font-family: "Monocraft";
+
+    --dark: #11111b;
+    --light: #cdd6f4;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--dark);
+    overflow: hidden;
+
+    font-family: var(--font-family), monospace;
+    font-size: 18px;
+}
+
+canvas {
+    margin: 0;
+
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    -ms-interpolation-mode: nearest-neighbor;
+    font-smooth: never;
+    -webkit-font-smoothing: none;
+}
+
+.throbber {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: var(--dark);
+    opacity: 100%;
+
+    transition: opacity 1s;
+    pointer-events: none;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinner {
+    display: inline-block;
+
+    color: var(--light);
+    font-size: 36px;
+
+    animation: spin 1s linear infinite;
+}
+
+.popup-input {
+    position: absolute;
+    box-sizing: border-box;
+    outline: none;
+    border: none;
+
+    background: var(--light);
+    color: var(--dark);
+
+    font-family: var(--font-family), monospace;
+    text-align: center;
+}
