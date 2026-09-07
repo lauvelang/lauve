@@ -1,4 +1,6 @@
+// @ts-ignore
 import path from "node:path";
+// @ts-ignore
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);

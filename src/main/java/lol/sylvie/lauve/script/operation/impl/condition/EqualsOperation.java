@@ -23,8 +23,6 @@ public class EqualsOperation extends Operation {
             return (first == null && second == null);
         }
 
-
-
         // Equate string values otherwise
         // TODO: Check if this catches all cases
         String firstValue = TypeCoercion.toString(first);

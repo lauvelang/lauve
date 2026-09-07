@@ -31,6 +31,10 @@ function fontAlignment(align: CanvasTextAlign = "left", baseline: CanvasTextBase
     ctx.textBaseline = baseline;
 }
 
+// Hold mouse state for immediate mode stuff
+let canvasMouseX = 0;
+let canvasMouseY = 0;
+
 // Rendering
 
 /*
@@ -43,7 +47,7 @@ okay so basically how we are gonna do this is by
 also, i learned that (x / 2) - (y / 2) = (x - y) / 2; ive been doing it wrong my entire life bruh
  */
 
-function layoutNode(node: Node, x: number, y: number) {
+function calculateSizes(root: Node, x: number, y: number) {
 
 }
 
@@ -78,8 +82,16 @@ function draw() {
 }
 
 export function initRenderer() {
+    // Scale the canvas to the entire size of the window
     initCanvas();
     window.addEventListener("resize", () => initCanvas());
 
-    draw();
+    // Keep track of mouse state
+    canvas.addEventListener("mousemove", (event) => {
+        canvasMouseX = event.clientX;
+        canvasMouseY = event.clientY;
+    });
+
+    // Start draw loop
+    requestAnimationFrame(draw);
 }

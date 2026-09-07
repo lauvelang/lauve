@@ -1,6 +1,9 @@
 # datagen
 web/blocks.json
 
+# for some reason the debug runScript logs
+logs/
+
 # gradle
 
 .gradle/
