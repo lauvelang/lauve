@@ -44,6 +44,11 @@ export function lookupDefinition(id: Id): Definition {
     return <Definition> definitions[id.namespace][id.path];
 }
 
+export function lookupColor(namespace: string): string {
+    let [r, g, b] = <number[]> definitions[namespace]["color"] ?? [0, 0, 0];
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
 export async function loadDefinitions() {
     console.log("Loading definitions...");
     return loadJson(URL).then(data => definitions = data);

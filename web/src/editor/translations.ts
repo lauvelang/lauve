@@ -2,12 +2,12 @@ import { Id, loadJson } from "../utils";
 
 let translations: any;
 
-export async function lookupForNode(opcode: Id, part: string) {
+export function lookupForNode(opcode: Id, part: string) {
     let node = translations?.[opcode.namespace]?.[opcode.path];
     return node?.[part] ?? part;
 }
 
-export async function lookupGroupName(name: string) {
+export function lookupGroupName(name: string) {
     return translations?.[name]
 }
 

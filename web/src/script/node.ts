@@ -1,5 +1,6 @@
-import {Id} from "../utils";
+import {Id, Rectangle} from "../utils";
 import {Definition, lookupDefinition} from "./definitions";
+import {Script} from "./script";
 
 export class Argument {
     resolved: boolean;
@@ -28,8 +29,7 @@ export class Node {
     parent: string | null; // Either the node above or the node that contains (if shape is input) this node
     next: string | null; // The node below this node
 
-    x: number; // The location of this node in the editor
-    y: number; // Not used by the runtime
+    renderInfo: Rectangle;
 
     constructor(id: string, opcode: Id, args: Map<string, Argument>, parent: string | null, next: string | null, x: number, y: number) {
         this.id = id;
@@ -37,8 +37,18 @@ export class Node {
         this.args = args;
         this.parent = parent;
         this.next = next;
-        this.x = x;
-        this.y = y;
+
+        this.renderInfo = new Rectangle(x, y, 0, 0);
+    }
+
+    mayHaveChild(): boolean {
+        let definition = lookupDefinition(this.opcode);
+        return definition.has_children;
+    }
+
+    getFirstChild(script: Script): Node | undefined {
+        let cid = this.args.get("child")?.value;
+        return script.lookupNode(cid);
     }
 
     static fromJson(id: string, data: any): Node {

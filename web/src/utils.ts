@@ -29,7 +29,7 @@ export async function loadJson(source: string): Promise<any> {
     return fetch(source).then(res => res.json());
 }
 
-class Rectangle {
+export class Rectangle {
     x: number;
     y: number;
     width: number;
@@ -38,6 +38,16 @@ class Rectangle {
     constructor(x: number, y: number, width: number, height: number) {
         this.x = x;
         this.y = y;
+        this.width = width;
+        this.height = height;
+    }
+
+    setPos(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+    }
+
+    setSize(width: number, height: number) {
         this.width = width;
         this.height = height;
     }
