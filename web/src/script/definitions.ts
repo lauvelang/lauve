@@ -3,16 +3,16 @@ import { Id, loadJson } from "../utils";
 const URL = "/blocks.json"
 
 export enum NodeShape {
-    TOP = "top",
+    START = "start",
     NORMAL = "normal",
-    BOTTOM = "bottom",
+    END = "end",
     INPUT = "input"
 }
 
 export const NodeShapeConnectivity: Record<NodeShape, { top: boolean, bottom: boolean }> = {
-    [NodeShape.TOP]: { top: false, bottom: true },
+    [NodeShape.START]: { top: false, bottom: true },
     [NodeShape.NORMAL]: { top: true, bottom: true },
-    [NodeShape.BOTTOM]: { top: true, bottom: false },
+    [NodeShape.END]: { top: true, bottom: false },
     [NodeShape.INPUT]: { top: false, bottom: false }
 };
 

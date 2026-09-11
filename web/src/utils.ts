@@ -29,6 +29,11 @@ export async function loadJson(source: string): Promise<any> {
     return fetch(source).then(res => res.json());
 }
 
+export function pointInBounds(x: number, y: number, width: number, height: number, px: number, py: number) {
+    return x <= px && px <= x + width &&
+        y <= py && py <= y + height;
+}
+
 export class Rectangle {
     x: number;
     y: number;
@@ -53,7 +58,6 @@ export class Rectangle {
     }
 
     isInside(x: number, y: number) {
-        return this.x <= x && x <= this.x + this.width &&
-        this.y <= y && y <= this.y + this.height;
+        return pointInBounds(this.x, this.y, this.width, this.height, x, y)
     }
 }

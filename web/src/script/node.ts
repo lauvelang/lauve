@@ -30,6 +30,7 @@ export class Node {
     next: string | null; // The node below this node
 
     renderInfo: Rectangle;
+    definition: Definition;
 
     constructor(id: string, opcode: Id, args: Map<string, Argument>, parent: string | null, next: string | null, x: number, y: number) {
         this.id = id;
@@ -39,11 +40,11 @@ export class Node {
         this.next = next;
 
         this.renderInfo = new Rectangle(x, y, 0, 0);
+        this.definition = lookupDefinition(this.opcode);
     }
 
     mayHaveChild(): boolean {
-        let definition = lookupDefinition(this.opcode);
-        return definition.has_children;
+        return this.definition.has_children;
     }
 
     getFirstChild(script: Script): Node | undefined {
