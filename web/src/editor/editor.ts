@@ -77,7 +77,14 @@ function unhookDraggedNode() {
     if (!parent) return;
 
     if (draggingNode.definition.shape === "input") {
+        for (let arg of parent.args.values()) {
+            if (arg.resolved || arg.value !== draggingNode.id) continue;
 
+            draggingNode.parent = null;
+            arg.resolved = true;
+            arg.value = null;
+            break;
+        }
     } else {
         if (parent.getFirstChild(script) === draggingNode) {
             parent.setFirstChild(null)
