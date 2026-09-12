@@ -94,7 +94,7 @@ tasks.register('runScript', JavaExec) {
 tasks.register('generateEditorData', JavaExec) {
 	classpath = sourceSets.main.runtimeClasspath
 	mainClass = 'lol.sylvie.lauve.script.datagen.ScriptDatagen'
-	workingDir = file("$projectDir/web")
+	workingDir = file("$projectDir/web/public")
 
 	doFirst {
 		if (!workingDir.exists()) {

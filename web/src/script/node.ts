@@ -1,6 +1,7 @@
 import {Id, Rectangle} from "../utils";
-import {Definition, lookupDefinition} from "./definitions";
+import {Definition, lookupDefinition, MISSINGNO} from "./definitions";
 import {Script} from "./script";
+import {script} from "../editor/state";
 
 export class Argument {
     resolved: boolean;
@@ -22,6 +23,18 @@ export function generateNodeId() {
     return result;
 }
 
+export function findLastInStack(root: Node): Node {
+    let current = root;
+    while (current.next) { current = script.lookupNode(current.next)!; }
+    return current;
+}
+
+export function findFirstInStack(root: Node): Node {
+    let current = root;
+    while (current.parent) { current = script.lookupNode(current.parent)!; }
+    return current;
+}
+
 export class Node {
     id: string; // Unique ID to each node
     opcode: Id; // The type of block this is
@@ -29,7 +42,8 @@ export class Node {
     parent: string | null; // Either the node above or the node that contains (if shape is input) this node
     next: string | null; // The node below this node
 
-    renderInfo: Rectangle;
+    renderBB: Rectangle;
+    lastModified: number;
     definition: Definition;
 
     constructor(id: string, opcode: Id, args: Map<string, Argument>, parent: string | null, next: string | null, x: number, y: number) {
@@ -39,7 +53,8 @@ export class Node {
         this.parent = parent;
         this.next = next;
 
-        this.renderInfo = new Rectangle(x, y, 0, 0);
+        this.renderBB = new Rectangle(x, y, 0, 0);
+        this.lastModified = 0; this.markModified();
         this.definition = lookupDefinition(this.opcode);
     }
 
@@ -50,6 +65,22 @@ export class Node {
     getFirstChild(script: Script): Node | undefined {
         let cid = this.args.get("child")?.value;
         return script.lookupNode(cid);
+    }
+
+    setFirstChild(node: Node | null) {
+        let arg = this.args.get("child");
+        if (!arg) return;
+
+        arg.value = node ? node.id : null;
+    }
+
+    linkNext(next: Node) {
+        this.next = next.id;
+        next.parent = this.id;
+    }
+
+    markModified() {
+        this.lastModified = Date.now();
     }
 
     static fromJson(id: string, data: any): Node {

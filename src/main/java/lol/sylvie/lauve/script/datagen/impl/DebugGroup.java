@@ -17,6 +17,10 @@ public class DebugGroup extends BlockGroup {
 
     @Override
     public void init() {
+        define(Definition.builder(id("missingno"))
+                        .label("unknown")
+                        .build());
+
         define(Definition.builder(id("log"))
                 .label("log")
                 .input("text", InputPart.Controller.STRING, "Hello, world!")

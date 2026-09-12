@@ -38,15 +38,15 @@ export type Definition = {
     description: Part[]
 }
 
-let definitions: { [namespace: string]: { [path: string]: Definition | number[] } } = {};
+let definitions: { [namespace: string]: { [path: string]: Definition | [number, number, number] } } = {};
+export const MISSINGNO: Id = new Id("debug", "missingno");
 
 export function lookupDefinition(id: Id): Definition {
     return <Definition> definitions[id.namespace][id.path];
 }
 
-export function lookupColor(namespace: string): string {
-    let [r, g, b] = <number[]> definitions[namespace]["color"] ?? [0, 0, 0];
-    return `rgb(${r}, ${g}, ${b})`;
+export function lookupColor(namespace: string): [number, number, number] {
+    return <[number, number, number]> definitions[namespace]["color"] ?? [0, 0, 0];
 }
 
 export async function loadDefinitions() {

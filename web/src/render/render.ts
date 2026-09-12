@@ -5,7 +5,8 @@ import {script} from "../editor/state";
 import {lookupColor, NodeShapeConnectivity} from "../script/definitions";
 import {lookupForNode} from "../editor/translations";
 import {pointInBounds, Rectangle} from "../utils";
-import {initEditor, tickEditor} from "../editor/editor";
+import {draggingNode, initEditor, isDraggingNode, tickEditor} from "../editor/editor";
+import {hslToRgb, intArrayToString, rgbToHsl} from "./color";
 let flavor = flavors.mocha.colors;
 
 export const canvas = document.querySelector("canvas")!;
@@ -21,6 +22,10 @@ function initCanvas() {
 // Utility functions
 function fillColor(color: string) {
     ctx.fillStyle = color;
+}
+
+function strokeColor(color: string) {
+    ctx.strokeStyle = color;
 }
 
 function resetFont() {
@@ -42,14 +47,12 @@ function textHeight(metrics: TextMetrics) {
 
 const NOTCH_WIDTH = 20;
 const NOTCH_DEPTH = 4;
-function notchedFillRect(x: number, y: number, width: number, height: number, topX: number, bottomX: number) {
-    function indent(inX: number, inY: number) {
+function notchedRect(x: number, y: number, width: number, height: number, topX: number, bottomX: number, fill: boolean = true) {
+    function indent(inX: number, inY: number, reverse: boolean = false) {
         let notchStart = x + inX;
         let notchEnd = notchStart + NOTCH_WIDTH;
 
-        if (notchStart > notchEnd) {
-            [notchEnd, notchStart] = [notchStart, notchEnd];
-        }
+        if (reverse) { [notchStart, notchEnd] = [notchEnd, notchStart] }
 
         let notchY = inY + NOTCH_DEPTH;
         ctx.lineTo(notchStart, inY)
@@ -71,14 +74,34 @@ function notchedFillRect(x: number, y: number, width: number, height: number, to
     ctx.lineTo(endX, endY);
 
     if (bottomX != 0) {
-        indent(bottomX, endY)
+        indent(bottomX, endY, true)
     }
 
     ctx.lineTo(x, endY);
     ctx.lineTo(x, y)
 
-    ctx.strokeStyle = ctx.fillStyle
-    ctx.fill();
+    if (fill)
+        ctx.fill();
+    else
+        ctx.stroke()
+}
+
+function notchedRectOutlined(x: number, y: number, width: number, height: number, topX: number, bottomX: number) {
+    notchedRect(x, y, width, height, topX, bottomX, true);
+    notchedRect(x, y, width, height, topX, bottomX, false);
+}
+
+function strokeAndFillRect(x: number, y: number, width: number, height: number) {
+    ctx.fillRect(x, y, width, height);
+    ctx.strokeRect(x, y, width, height);
+}
+
+function strokeAndFillText(text: string, x: number, y: number, strokeColor: string, fillColor: string) {
+    ctx.strokeStyle = strokeColor;
+    ctx.strokeText(text, x, y);
+
+    ctx.fillStyle = fillColor;
+    ctx.fillText(text, x, y);
 }
 
 export function setCursor(cursor: string) {
@@ -86,11 +109,20 @@ export function setCursor(cursor: string) {
 }
 
 // For culling
-let screenRect = new Rectangle(0, 0, canvas.width, canvas.height);
+function isOnScreen(rect: Rectangle) {
+    let x = rect.x + script.camera[0];
+    let y = rect.y + script.camera[1];
+
+    let x2 = x + rect.width;
+    let y2 = y + rect.height;
+
+    // b is screen
+    return x2 >= 0 && x <= canvas.width && y <= canvas.height && y2 >= 0
+}
 
 // Hold mouse state for immediate mode stuff
-let canvasMouseX = 0;
-let canvasMouseY = 0;
+export let canvasMouseX = 0;
+export let canvasMouseY = 0;
 
 let workMouseX = 0;
 let workMouseY = 0;
@@ -98,6 +130,27 @@ let workMouseY = 0;
 // Editor logic stuff
 export let hoveredNode: Node | null = null;
 export let hoveredField: string | null = null;
+
+const MAX_HOOK_DISTANCE = 32;
+let closestHookPointDist = Infinity;
+let closestHookPointPos = [0, 0];
+export let closestHookNode: Node | null = null;
+export let isInnerHook = false;
+
+function compareHookPoint(x: number, y: number, node: Node, inner: boolean) {
+    if (!draggingNode || node === draggingNode || node.definition.shape === "input") return;
+
+    let distance = Math.hypot(
+        draggingNode.renderBB.x - x,
+        draggingNode.renderBB.y - y
+    )
+    if (distance > MAX_HOOK_DISTANCE || distance > closestHookPointDist) return;
+
+    closestHookPointPos = [x, y];
+    closestHookPointDist = distance;
+    closestHookNode = node;
+    isInnerHook = inner;
+}
 
 // Rendering
 const NODE_PADDING_WIDTH = 10;
@@ -123,8 +176,8 @@ function getStackDimensions(root: Node, recalculate: boolean = true): [number, n
     let current: Node | undefined = root;
     while (current) {
         if (recalculate) calculateSizes(current);
-        width = Math.max(width, current.renderInfo.width);
-        height += current.renderInfo.height;
+        width = Math.max(width, current.renderBB.width);
+        height += current.renderBB.height;
 
         current = script.lookupNode(current.next);
     }
@@ -168,8 +221,8 @@ function calculateSizes(root: Node) {
 
                     calculateSizes(node);
 
-                    width += node.renderInfo.width;
-                    height = Math.max(height, node.renderInfo.height + doublePaddingH);
+                    width += node.renderBB.width;
+                    height = Math.max(height, node.renderBB.height + doublePaddingH);
                 }
             }
         }
@@ -191,54 +244,77 @@ function calculateSizes(root: Node) {
         }
     }
 
-    root.renderInfo.setSize(width, height);
+    root.renderBB.setSize(width, height);
 }
 
 const NOTCH_OFFSET = 12;
 function renderFullNode(root: Node) {
     let definition = root.definition;
 
-    let cx = root.renderInfo.x + NODE_PADDING_WIDTH;
-    let y = root.renderInfo.y;
+    let cx = root.renderBB.x + NODE_PADDING_WIDTH;
+    let y = root.renderBB.y;
 
     let color = lookupColor(root.opcode.namespace)
 
-    let blockWidth = root.renderInfo.width;
-    let blockHeight = root.renderInfo.height;
+    let blockWidth = root.renderBB.width;
+    let blockHeight = root.renderBB.height;
     let child = null;
     let tailHeight = CHILD_HAVER_SPACE;
+
+    // Handle any immediate state
+    if (root.renderBB.isInside(workMouseX, workMouseY)) {
+        hoveredNode = root;
+    }
+
+    if (isDraggingNode) {
+        compareHookPoint(root.renderBB.x, root.renderBB.y + blockHeight, root, false)
+    }
+
+    // Handle child nodes
     if (root.mayHaveChild()) {
         blockHeight -= CHILD_HAVER_BASE;
 
+        let innerX = root.renderBB.x + CHILD_HAVER_INDENT;
         child = root.getFirstChild(script);
         if (child) {
             let [_, height] = getStackDimensions(child, false);
             blockHeight -= height;
             tailHeight = height;
-            drawNodeStack(child, root.renderInfo.x + CHILD_HAVER_INDENT, root.renderInfo.y + blockHeight);
+            drawNodeStack(child, innerX, root.renderBB.y + blockHeight);
         } else {
             blockHeight -= CHILD_HAVER_SPACE;
         }
+
+        compareHookPoint(innerX, root.renderBB.y + blockHeight, root, true)
     }
 
-    fillColor(color);
+    // Render self
+    fillColor(intArrayToString(color));
+
+    let outline = rgbToHsl(...color);
+    outline[2] *= 0.9;
+    outline = hslToRgb(...outline)
+    strokeColor(intArrayToString(outline));
 
     if (definition.shape !== "input") {
         let connectivity  = NodeShapeConnectivity[definition.shape];
-        notchedFillRect(
-            root.renderInfo.x, root.renderInfo.y, blockWidth, blockHeight,
-            connectivity.top ? NOTCH_OFFSET : 0,
-            connectivity.bottom ? NOTCH_OFFSET + (root.mayHaveChild() ? CHILD_HAVER_INDENT : 0) : 0);
+        let topNotch = connectivity.top ? NOTCH_OFFSET : 0;
+        let bottomNotch = connectivity.bottom ? NOTCH_OFFSET + (root.mayHaveChild() ? CHILD_HAVER_INDENT : 0) : 0;
+        notchedRectOutlined(
+            root.renderBB.x, root.renderBB.y, blockWidth, blockHeight, topNotch, bottomNotch);
 
-        if (child) { // draw the tail
-            let bottomY = root.renderInfo.y + blockHeight;
-            ctx.fillRect(root.renderInfo.x, bottomY, CHILD_HAVER_INDENT, tailHeight);
-            notchedFillRect(root.renderInfo.x, bottomY + tailHeight, blockWidth, CHILD_HAVER_BASE,
+        if (root.mayHaveChild()) { // draw the tail
+            let bottomY = root.renderBB.y + blockHeight;
+
+            notchedRectOutlined(root.renderBB.x, bottomY + tailHeight, blockWidth, CHILD_HAVER_BASE,
                 NOTCH_OFFSET + CHILD_HAVER_INDENT,
                 connectivity.bottom ? NOTCH_OFFSET : 0)
+
+            ctx.strokeRect(root.renderBB.x, bottomY, CHILD_HAVER_INDENT, tailHeight);
+            ctx.fillRect(root.renderBB.x + (ctx.lineWidth / 2), bottomY - ctx.lineWidth, CHILD_HAVER_INDENT - ctx.lineWidth, tailHeight + (ctx.lineWidth * 2));
         }
     } else {
-        ctx.fillRect(root.renderInfo.x, root.renderInfo.y, blockWidth, blockHeight)
+        strokeAndFillRect(root.renderBB.x, root.renderBB.y, blockWidth, blockHeight);
     }
 
     for (let part of definition.description) {
@@ -261,8 +337,9 @@ function renderFullNode(root: Node) {
 
                     let fy = y + ((blockHeight - FIELD_HEIGHT) / 2);
                     fillColor(flavor.text.hex);
+                    strokeColor(flavor.subtext0.hex);
 
-                    ctx.fillRect(cx, fy, fWidth, FIELD_HEIGHT);
+                    strokeAndFillRect(cx, fy, fWidth, FIELD_HEIGHT);
 
                     fillColor(flavor.crust.hex);
                     fontAlignment("center", "middle")
@@ -275,20 +352,16 @@ function renderFullNode(root: Node) {
                     cx += fWidth;
                 } else {
                     let node = script.lookupNode(arg.value)!;
-                    node.renderInfo.x = cx;
-                    node.renderInfo.y = y + ((blockHeight - node.renderInfo.height) / 2);
+                    node.renderBB.x = cx;
+                    node.renderBB.y = y + ((blockHeight - node.renderBB.height) / 2);
                     renderFullNode(node);
-                    cx += node.renderInfo.width;
+                    cx += node.renderBB.width;
                 }
 
                 break;
             }
         }
         cx += PART_MARGIN;
-    }
-
-    if (root.renderInfo.isInside(workMouseX, workMouseY)) {
-        hoveredNode = root;
     }
 }
 
@@ -297,13 +370,13 @@ function drawNodeStack(root: Node, x: number, y: number): number {
     let cy = y;
     let current: Node | undefined = root;
     while (current != null) {
-        current.renderInfo.x = x;
-        current.renderInfo.y = cy;
+        current.renderBB.x = x;
+        current.renderBB.y = cy;
 
         calculateSizes(current);
-        renderFullNode(current);
+        if (isOnScreen(current.renderBB)) renderFullNode(current);
 
-        cy += current.renderInfo.height;
+        cy += current.renderBB.height;
 
         current = script.lookupNode(current.next);
     }
@@ -311,29 +384,48 @@ function drawNodeStack(root: Node, x: number, y: number): number {
     return cy - y;
 }
 
+function drawHookArrow() {
+    if (!closestHookNode) return
+
+    fontAlignment("right", "middle")
+
+    let [x, y] = closestHookPointPos;
+    strokeAndFillText("→",
+        x - 4,
+        y,
+        flavor.crust.hex,
+        flavor.text.hex);
+}
+
 function draw() {
     let frameStart = performance.now();
 
-    // Reset various things
+    // Reset rendering
     resetFont();
     fontAlignment();
+    ctx.lineWidth = 2;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     ctx.save();
     ctx.translate(script.camera[0], script.camera[1]);
 
-    screenRect.setPos(script.camera[0], script.camera[1]);
-    screenRect.setSize(canvas.width, canvas.height);
-
+    // Reset immediate state
     hoveredField = null;
     hoveredNode = null;
 
-    // Render stuff
-    for (let node of script.nodes.values()) {
-        if (node.parent) continue;
+    closestHookPointDist = Infinity
+    closestHookNode = null
+    isInnerHook = false
 
-        drawNodeStack(node, node.renderInfo.x, node.renderInfo.y);
+    // Render stuff
+    let renderables = Array.from(script.nodes.values())
+        .filter(n => !n.parent)
+        .sort((a, b) => a.lastModified - b.lastModified);
+    for (let node of renderables) {
+        drawNodeStack(node, node.renderBB.x, node.renderBB.y);
     }
+
+    drawHookArrow();
 
     // Handle dragging, clicking, etc.
     tickEditor()
@@ -345,12 +437,13 @@ function draw() {
     fontAlignment("right", "top");
 
     const debugLines: [string, string][] = [
-        [flavor.text.hex, `${frameDelta.toFixed(1)}ms`],
+        [flavor.text.hex, `${frameDelta.toFixed(2)}ms`],
         [flavor.red.hex, `${script.name}`],
         [flavor.yellow.hex, "N: " + (hoveredNode != null ? (<Node> hoveredNode).id : "[no hover]")],
         [flavor.yellow.hex, "F: " + (hoveredField != null ? hoveredField : "[no field]")],
         [flavor.green.hex, `R: ${canvasMouseX}, ${canvasMouseY}`],
         [flavor.green.hex, `C: ${workMouseX}, ${workMouseY}`],
+        [flavor.blue.hex, `${closestHookNode} (${closestHookPointDist}px)`]
     ]
 
     for (let i = 0; i < debugLines.length; i++) {
