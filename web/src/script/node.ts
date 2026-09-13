@@ -7,6 +7,8 @@ export class Argument {
     resolved: boolean;
     value: string | any;
 
+    oldResolvedValue: any = null;
+
     constructor(resolved: boolean, value: any | string) {
         this.resolved = resolved;
         this.value = value;
@@ -25,7 +27,9 @@ export function generateNodeId() {
 
 export function findLastInStack(root: Node): Node {
     let current = root;
-    while (current.next) { current = script.lookupNode(current.next)!; }
+    while (current.next) {
+        current = script.lookupNode(current.next)!;
+    }
     return current;
 }
 
@@ -44,6 +48,7 @@ export class Node {
 
     renderBB: Rectangle;
     lastModified: number;
+
     definition: Definition;
 
     constructor(id: string, opcode: Id, args: Map<string, Argument>, parent: string | null, next: string | null, x: number, y: number) {
@@ -77,6 +82,20 @@ export class Node {
     linkNext(next: Node) {
         this.next = next.id;
         next.parent = this.id;
+    }
+
+    isPartOfSelf(node: Node): boolean {
+        for (let arg of this.args.values()) {
+            if (!arg.resolved) {
+                if (node.id === arg.value) {
+                    return true;
+                }
+
+                let argNode = script.lookupNode(arg.value);
+                if (argNode && argNode.isPartOfSelf(node)) return true;
+            }
+        }
+        return false;
     }
 
     markModified() {

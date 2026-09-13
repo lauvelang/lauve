@@ -13,6 +13,11 @@ html, body {
 
     font-family: var(--font-family), monospace;
     font-size: 18px;
+
+    background-size: 32px 32px;
+    background-image:
+            linear-gradient(to right, #181825 1px, transparent 1px),
+            linear-gradient(to bottom, #181825 1px, transparent 1px);
 }
 
 canvas {
@@ -72,4 +77,5 @@ canvas {
 
     font-family: var(--font-family), monospace;
     text-align: center;
+    font-size: 18px;
 }

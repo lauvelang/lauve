@@ -129,26 +129,36 @@ let workMouseY = 0;
 
 // Editor logic stuff
 export let hoveredNode: Node | null = null;
+export let hoveredFieldRect: Rectangle | null = null;
 export let hoveredField: string | null = null;
 
 const MAX_HOOK_DISTANCE = 32;
 let closestHookPointDist = Infinity;
 let closestHookPointPos = [0, 0];
 export let closestHookNode: Node | null = null;
+export let closestHookFieldName: string | null = null;
 export let isInnerHook = false;
 
-function compareHookPoint(x: number, y: number, node: Node, inner: boolean) {
-    if (!draggingNode || node === draggingNode || node.definition.shape === "input") return;
+function compareHookPoint(x: number, y: number, node: Node, inner: boolean, fieldName: string | null = null) {
+    if (!draggingNode || node === draggingNode) return;
+
+    let isDraggedInput = draggingNode.definition.shape === "input";
+    if (!isDraggedInput && fieldName) return;
+
+    let [nx, ny] = isDraggedInput ?
+        [workMouseX, workMouseY] :
+        [draggingNode.renderBB.x, draggingNode.renderBB.y];
 
     let distance = Math.hypot(
-        draggingNode.renderBB.x - x,
-        draggingNode.renderBB.y - y
+        nx - x,
+        ny - y
     )
     if (distance > MAX_HOOK_DISTANCE || distance > closestHookPointDist) return;
 
     closestHookPointPos = [x, y];
     closestHookPointDist = distance;
     closestHookNode = node;
+    closestHookFieldName = fieldName;
     isInnerHook = inner;
 }
 
@@ -250,6 +260,7 @@ function calculateSizes(root: Node) {
 const NOTCH_OFFSET = 12;
 function renderFullNode(root: Node) {
     let definition = root.definition;
+    let isDraggedInput = draggingNode?.definition.shape === "input";
 
     let cx = root.renderBB.x + NODE_PADDING_WIDTH;
     let y = root.renderBB.y;
@@ -264,9 +275,10 @@ function renderFullNode(root: Node) {
     // Handle any immediate state
     if (root.renderBB.isInside(workMouseX, workMouseY)) {
         hoveredNode = root;
+        hoveredField = null;
     }
 
-    if (isDraggingNode) {
+    if (isDraggingNode && !isDraggedInput) {
         compareHookPoint(root.renderBB.x, root.renderBB.y + blockHeight, root, false)
     }
 
@@ -285,7 +297,7 @@ function renderFullNode(root: Node) {
             blockHeight -= CHILD_HAVER_SPACE;
         }
 
-        compareHookPoint(innerX, root.renderBB.y + blockHeight, root, true)
+        if (!isDraggedInput) compareHookPoint(innerX, root.renderBB.y + blockHeight, root, true)
     }
 
     // Render self
@@ -343,11 +355,17 @@ function renderFullNode(root: Node) {
 
                     fillColor(flavor.crust.hex);
                     fontAlignment("center", "middle")
-                    ctx.fillText(arg.value, cx + (fWidth / 2), fy + (FIELD_HEIGHT / 2))
+                    let tx = cx + (fWidth / 2);
+                    let ty = fy + (FIELD_HEIGHT / 2);
+                    ctx.fillText(arg.value !== null ? arg.value : "", tx, ty)
 
-                    if (pointInBounds(cx, fy, fWidth, FIELD_HEIGHT, workMouseX, workMouseY)) {
+                    let fieldRect = new Rectangle(cx, fy, fWidth, FIELD_HEIGHT);
+                    if (fieldRect.isInside(workMouseX, workMouseY)) {
                         hoveredField = part.id;
+                        hoveredFieldRect = fieldRect;
                     }
+
+                    if (!draggingNode?.isPartOfSelf(root)) compareHookPoint(tx, ty, root, false, part.id);
 
                     cx += fWidth;
                 } else {
@@ -384,7 +402,7 @@ function drawNodeStack(root: Node, x: number, y: number): number {
     return cy - y;
 }
 
-function drawHookArrow() {
+function drawHookIndicator() {
     if (!closestHookNode) return
 
     fontAlignment("right", "middle")
@@ -397,7 +415,14 @@ function drawHookArrow() {
         flavor.text.hex);
 }
 
-function draw() {
+const GRID_SIZE = 32;
+function updateBackground() {
+    let xOffset = script.camera[0] % GRID_SIZE;
+    let yOffset = script.camera[1] % GRID_SIZE;
+    document.body.style.backgroundPosition = `${xOffset}px ${yOffset}px`;
+}
+
+function draw(delta: number = 0) {
     let frameStart = performance.now();
 
     // Reset rendering
@@ -415,6 +440,7 @@ function draw() {
 
     closestHookPointDist = Infinity
     closestHookNode = null
+    closestHookFieldName = null;
     isInnerHook = false
 
     // Render stuff
@@ -425,7 +451,7 @@ function draw() {
         drawNodeStack(node, node.renderBB.x, node.renderBB.y);
     }
 
-    drawHookArrow();
+    drawHookIndicator();
 
     // Handle dragging, clicking, etc.
     tickEditor()
@@ -451,6 +477,8 @@ function draw() {
         fillColor(color);
         ctx.fillText(line, canvas.width - 4, 4 + (i * 18))
     }
+
+    updateBackground()
 
     // Queue next frame
     requestAnimationFrame(draw);

@@ -1,14 +1,14 @@
 import {
     canvas,
     canvasMouseX,
-    canvasMouseY,
+    canvasMouseY, closestHookFieldName,
     closestHookNode,
-    hoveredField,
+    hoveredField, hoveredFieldRect,
     hoveredNode, isInnerHook,
     setCursor
 } from "../render/render";
 import {script} from "./state";
-import {findFirstInStack, findLastInStack, Node} from "../script/node";
+import {Argument, findFirstInStack, findLastInStack, Node} from "../script/node";
 
 // You can't drag the camera and a node at the same time, so these are shared
 let dragStart: [number, number] = [0, 0];  // Where the mouse was when starting a move
@@ -51,8 +51,46 @@ function tickCursor() {
 }
 
 // Node field data entry
-function handleFieldEnter() {
+let enteringNode: Node | null = null;
+let enteringArg: Argument | null = null;
+let fieldInput: HTMLInputElement | null = null;
+function endFieldEnter() {
+    if (!enteringArg || !fieldInput) return
 
+    enteringArg.value = fieldInput.value;
+    enteringArg = null;
+
+    fieldInput.remove();
+    fieldInput = null;
+}
+
+function startFieldEnter(event: MouseEvent) {
+    if (!hoveredNode || !hoveredField || !hoveredFieldRect) return
+    enteringNode = hoveredNode;
+
+    fieldInput = document.createElement("input");
+    fieldInput.classList.add("popup-input");
+
+    enteringArg = enteringNode.args.get(hoveredField)!;
+    fieldInput.value = enteringArg.value;
+
+    fieldInput.style.left = hoveredFieldRect.x + script.camera[0] + "px";
+    fieldInput.style.top = hoveredFieldRect.y + script.camera[1] + "px";
+    fieldInput.style.width = hoveredFieldRect.width + "px";
+    fieldInput.style.height = hoveredFieldRect.height + "px";
+
+    document.body.appendChild(fieldInput);
+
+    fieldInput.addEventListener("blur", () => {
+        if (enteringArg) endFieldEnter();
+    });
+    fieldInput.addEventListener("keyup", e => {
+        if (e.key === 'Enter') endFieldEnter();
+    });
+
+    fieldInput.focus();
+    fieldInput.select();
+    event.preventDefault();
 }
 
 // Moving nodes
@@ -81,8 +119,9 @@ function unhookDraggedNode() {
             if (arg.resolved || arg.value !== draggingNode.id) continue;
 
             draggingNode.parent = null;
+
             arg.resolved = true;
-            arg.value = null;
+            arg.value = arg.oldResolvedValue;
             break;
         }
     } else {
@@ -113,26 +152,40 @@ function tickNodeDrag() {
 }
 
 function finishNodeDrag() {
-    if (closestHookNode && draggingNode) {
-        let last = findLastInStack(draggingNode);
-        if (isInnerHook) {
-            let previousChild = closestHookNode.getFirstChild(script);
-            if (previousChild)
-                last.linkNext(previousChild);
+    if (closestHookNode && draggingNode && !draggingNode.parent) {
+        if (closestHookFieldName) {
+            // Attaching node to inside of other input
+            let arg = closestHookNode.args.get(closestHookFieldName);
+            if (arg) {
+                arg.oldResolvedValue = arg.value;
 
-
-            draggingNode.parent = closestHookNode.id;
-            closestHookNode.setFirstChild(draggingNode);
+                arg.resolved = false;
+                arg.value = draggingNode.id;
+                draggingNode.parent = closestHookNode.id;
+            }
         } else {
-            let previousNext = script.lookupNode(closestHookNode.next);
-            if (previousNext)
-                last.linkNext(previousNext);
+            // Attaching node to end
+            let last = findLastInStack(draggingNode);
+            if (isInnerHook) {
+                let previousChild = closestHookNode.getFirstChild(script);
+                if (previousChild)
+                    last.linkNext(previousChild);
 
-            closestHookNode.linkNext(draggingNode);
+
+                draggingNode.parent = closestHookNode.id;
+                closestHookNode.setFirstChild(draggingNode);
+            } else {
+                let previousNext = script.lookupNode(closestHookNode.next);
+                if (previousNext)
+                    last.linkNext(previousNext);
+
+                closestHookNode.linkNext(draggingNode);
+            }
+
+            let first = findFirstInStack(draggingNode);
+            if (first) first.markModified();
         }
 
-        let first = findFirstInStack(draggingNode);
-        if (first) first.markModified();
     }
 
     draggingNode = null;
@@ -154,7 +207,7 @@ function handleMouseDown(event: MouseEvent) {
         startCameraMove(event);
     } else {
         if (hoveredField) {
-            handleFieldEnter();
+            startFieldEnter(event);
         } else {
             startNodeDrag(event);
         }
