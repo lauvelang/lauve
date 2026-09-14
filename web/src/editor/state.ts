@@ -13,6 +13,7 @@ export function promptLoad(event: KeyboardEvent) {
     const input = document.createElement('input');
 
     input.type = "file";
+    input.accept = "text/plain,.luv";
     input.onchange = e => {
         let target = e.target as HTMLInputElement;
         if (!target?.files) return;

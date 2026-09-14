@@ -38,18 +38,18 @@ export type Definition = {
     description: Part[]
 }
 
-let definitions: { [namespace: string]: { [path: string]: Definition | [number, number, number] } } = {};
+export let DEFINITIONS: { [namespace: string]: { [path: string]: Definition | [number, number, number] } } = {};
 export const MISSINGNO: Id = new Id("debug", "missingno");
 
 export function lookupDefinition(id: Id): Definition {
-    return <Definition> definitions[id.namespace][id.path];
+    return <Definition> DEFINITIONS[id.namespace][id.path];
 }
 
 export function lookupColor(namespace: string): [number, number, number] {
-    return <[number, number, number]> definitions[namespace]["color"] ?? [0, 0, 0];
+    return <[number, number, number]> DEFINITIONS[namespace]["color"] ?? [0, 0, 0];
 }
 
 export async function loadDefinitions() {
     console.log("Loading definitions...");
-    return loadJson(URL).then(data => definitions = data);
+    return loadJson(URL).then(data => DEFINITIONS = data);
 }

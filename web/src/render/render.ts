@@ -2,9 +2,9 @@ import { flavors } from "@catppuccin/palette";
 import {FONT, SMALL_FONT} from "./font";
 import {Argument, Node} from "../script/node";
 import {script} from "../editor/state";
-import {lookupColor, NodeShapeConnectivity} from "../script/definitions";
+import {DEFINITIONS, lookupColor, NodeShapeConnectivity} from "../script/definitions";
 import {lookupForNode} from "../editor/translations";
-import {pointInBounds, Rectangle} from "../utils";
+import {Id, pointInBounds, Rectangle} from "../utils";
 import {draggingNode, initEditor, isDraggingNode, tickEditor} from "../editor/editor";
 import {hslToRgb, intArrayToString, rgbToHsl} from "./color";
 let flavor = flavors.mocha.colors;
@@ -415,6 +415,29 @@ function drawHookIndicator() {
         flavor.text.hex);
 }
 
+const TOOLBOX_NODES: Map<string, Node[]> = new Map();
+function initToolbox() {
+    for (let group in DEFINITIONS) {
+        let defaults: Node[] = [];
+        let definitionsInGroup = DEFINITIONS[group];
+        for (let path in definitionsInGroup) {
+            let opcode = new Id(group, path);
+
+            let node = Node.defaultOf(opcode);
+            node.id = opcode.toString();
+
+            defaults.push(node);
+        }
+
+        TOOLBOX_NODES.set(group, defaults);
+    }
+}
+
+function drawToolbox() {
+
+}
+
+// I don't like this, but just drawing the lines myself was too slow
 const GRID_SIZE = 32;
 function updateBackground() {
     let xOffset = script.camera[0] % GRID_SIZE;
@@ -453,17 +476,22 @@ function draw(delta: number = 0) {
 
     drawHookIndicator();
 
+    ctx.restore();
+
+    // Toolbox
+
+
     // Handle dragging, clicking, etc.
     tickEditor()
 
-    ctx.restore();
+
 
     // Debugging information
     let frameDelta = performance.now() - frameStart;
     fontAlignment("right", "top");
 
     const debugLines: [string, string][] = [
-        [flavor.text.hex, `${frameDelta.toFixed(2)}ms`],
+        [flavor.text.hex, `${frameDelta.toFixed(1)}ms`],
         [flavor.red.hex, `${script.name}`],
         [flavor.yellow.hex, "N: " + (hoveredNode != null ? (<Node> hoveredNode).id : "[no hover]")],
         [flavor.yellow.hex, "F: " + (hoveredField != null ? hoveredField : "[no field]")],
@@ -500,6 +528,9 @@ export function initRenderer() {
 
     // Add events to canvas
     initEditor(canvas);
+
+    // Generate default nodes for the toolbox
+    initToolbox()
 
     // Start draw loop
     requestAnimationFrame(draw);
