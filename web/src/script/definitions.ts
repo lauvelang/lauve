@@ -46,7 +46,7 @@ export function lookupDefinition(id: Id): Definition {
 }
 
 export function lookupColor(namespace: string): [number, number, number] {
-    return <[number, number, number]> DEFINITIONS[namespace]["color"] ?? [0, 0, 0];
+    return <[number, number, number]> DEFINITIONS[namespace]["_color"] ?? [0, 0, 0];
 }
 
 export async function loadDefinitions() {

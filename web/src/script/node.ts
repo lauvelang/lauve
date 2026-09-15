@@ -48,10 +48,11 @@ export class Node {
 
     renderBB: Rectangle;
     lastModified: number;
+    template: boolean;
 
     definition: Definition;
 
-    constructor(id: string, opcode: Id, args: Map<string, Argument>, parent: string | null, next: string | null, x: number, y: number) {
+    constructor(id: string, opcode: Id, args: Map<string, Argument>, parent: string | null, next: string | null, x: number, y: number, template: boolean = false) {
         this.id = id;
         this.opcode = opcode;
         this.args = args;
@@ -60,6 +61,8 @@ export class Node {
 
         this.renderBB = new Rectangle(x, y, 0, 0);
         this.lastModified = 0; this.markModified();
+        this.template = template;
+
         this.definition = lookupDefinition(this.opcode);
     }
 
@@ -113,7 +116,7 @@ export class Node {
         return new Node(id, parsedId, args, data.parent, data.next, data.x ?? 0, data.y ?? 0);
     }
 
-    static defaultOf(opcode: Id): Node {
+    static defaultOf(opcode: Id, toolbox: boolean = false): Node {
         let definition: Definition = lookupDefinition(opcode);
         if (!definition) throw new Error(`Unknown opcode: ${opcode}`);
 
@@ -125,7 +128,7 @@ export class Node {
             args.set(part.id, arg);
         }
 
-        let id = generateNodeId();
-        return new Node(id, opcode, args, null, null, 0, 0);
+        let id = toolbox ? opcode.toString() : generateNodeId();
+        return new Node(id, opcode, args, null, null, 0, 0, toolbox);
     }
 }

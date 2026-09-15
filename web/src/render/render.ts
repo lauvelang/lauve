@@ -3,8 +3,8 @@ import {FONT, SMALL_FONT} from "./font";
 import {Argument, Node} from "../script/node";
 import {script} from "../editor/state";
 import {DEFINITIONS, lookupColor, NodeShapeConnectivity} from "../script/definitions";
-import {lookupForNode} from "../editor/translations";
-import {Id, pointInBounds, Rectangle} from "../utils";
+import {lookupForNode, lookupGroupName} from "../editor/translations";
+import {Id, Rectangle} from "../utils";
 import {draggingNode, initEditor, isDraggingNode, tickEditor} from "../editor/editor";
 import {hslToRgb, intArrayToString, rgbToHsl} from "./color";
 let flavor = flavors.mocha.colors;
@@ -258,7 +258,7 @@ function calculateSizes(root: Node) {
 }
 
 const NOTCH_OFFSET = 12;
-function renderFullNode(root: Node) {
+export function renderFullNode(root: Node) {
     let definition = root.definition;
     let isDraggedInput = draggingNode?.definition.shape === "input";
 
@@ -273,7 +273,7 @@ function renderFullNode(root: Node) {
     let tailHeight = CHILD_HAVER_SPACE;
 
     // Handle any immediate state
-    if (root.renderBB.isInside(workMouseX, workMouseY)) {
+    if (root.renderBB.isInside(workMouseX, workMouseY) && !shouldDeferToToolbox(root, canvasMouseX)) {
         hoveredNode = root;
         hoveredField = null;
     }
@@ -360,7 +360,7 @@ function renderFullNode(root: Node) {
                     ctx.fillText(arg.value !== null ? arg.value : "", tx, ty)
 
                     let fieldRect = new Rectangle(cx, fy, fWidth, FIELD_HEIGHT);
-                    if (fieldRect.isInside(workMouseX, workMouseY)) {
+                    if (fieldRect.isInside(workMouseX, workMouseY) && !shouldDeferToToolbox(root, canvasMouseX)) {
                         hoveredField = part.id;
                         hoveredFieldRect = fieldRect;
                     }
@@ -415,16 +415,17 @@ function drawHookIndicator() {
         flavor.text.hex);
 }
 
+const MINIMIZED_TOOLBOX_WIDTH = 80;
+let toolboxWidth = MINIMIZED_TOOLBOX_WIDTH;
 const TOOLBOX_NODES: Map<string, Node[]> = new Map();
 function initToolbox() {
     for (let group in DEFINITIONS) {
         let defaults: Node[] = [];
         let definitionsInGroup = DEFINITIONS[group];
         for (let path in definitionsInGroup) {
+            if (path.startsWith("_")) continue
             let opcode = new Id(group, path);
-
-            let node = Node.defaultOf(opcode);
-            node.id = opcode.toString();
+            let node = Node.defaultOf(opcode, true);
 
             defaults.push(node);
         }
@@ -433,9 +434,24 @@ function initToolbox() {
     }
 }
 
-function drawToolbox() {
+function shouldDeferToToolbox(node: Node, x: number) {
+    if (node.template) return false;
 
+    return x < toolboxWidth;
 }
+
+const GROUP_ICON_INSET = 8;
+function drawToolbox() {
+    fillColor(flavor.base.hex)
+    ctx.fillRect(0, 0, toolboxWidth, canvas.height);
+
+    for (let group in DEFINITIONS) {
+        let name = lookupGroupName(group)
+
+
+    }
+}
+
 
 // I don't like this, but just drawing the lines myself was too slow
 const GRID_SIZE = 32;
@@ -479,12 +495,10 @@ function draw(delta: number = 0) {
     ctx.restore();
 
     // Toolbox
-
+    drawToolbox()
 
     // Handle dragging, clicking, etc.
     tickEditor()
-
-
 
     // Debugging information
     let frameDelta = performance.now() - frameStart;
