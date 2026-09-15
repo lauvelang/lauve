@@ -41,7 +41,7 @@ public abstract class BlockGroup {
         color.add(this.color[0]);
         color.add(this.color[1]);
         color.add(this.color[2]);
-        root.add("color", color);
+        root.add("_color", color);
 
         this.init();
         definitions.forEach((id, definition) -> {
