@@ -4,8 +4,8 @@ import {
     canvasMouseY, closestHookFieldName,
     closestHookNode,
     hoveredField, hoveredFieldRect,
-    hoveredNode, isInnerHook,
-    setCursor
+    hoveredNode, hoveredToolboxGroup, isInnerHook, selectedToolboxGroup, selectToolboxGroup,
+    setCursor, xInToolbox
 } from "../render/render";
 import {script} from "./state";
 import {Argument, findFirstInStack, findLastInStack, Node} from "../script/node";
@@ -48,6 +48,10 @@ function tickCursor() {
     } else {
         setCursor("default")
     }
+
+    if (hoveredToolboxGroup) {
+        setCursor("pointer")
+    }
 }
 
 // Node field data entry
@@ -65,6 +69,10 @@ function endFieldEnter() {
 }
 
 function startFieldEnter(event: MouseEvent) {
+    if (fieldInput) {
+        endFieldEnter();
+    }
+
     if (!hoveredNode || !hoveredField || !hoveredFieldRect) return
     enteringNode = hoveredNode;
 
@@ -100,8 +108,18 @@ let nodeDragOrigin = [0, 0];
 
 function startNodeDrag(event: MouseEvent) {
     isDraggingNode = true;
-    draggingNode = hoveredNode!;
 
+    if (hoveredNode && hoveredNode.template) {
+        let copy = Node.defaultOf(hoveredNode.opcode, false);
+        copy.renderBB.setPos(
+            hoveredNode.renderBB.x - script.camera[0],
+            hoveredNode.renderBB.y - script.camera[1]
+        )
+        script.addNode(copy);
+        draggingNode = copy;
+    } else {
+        draggingNode = hoveredNode!;
+    }
     draggingNode.markModified();
 
     nodeDragOrigin = [draggingNode.renderBB.x, draggingNode.renderBB.y];
@@ -152,7 +170,9 @@ function tickNodeDrag() {
 }
 
 function finishNodeDrag() {
-    if (closestHookNode && draggingNode && !draggingNode.parent) {
+    if (xInToolbox(canvasMouseX)) {
+        draggingNode?.erase()
+    } else if (closestHookNode && draggingNode && !draggingNode.parent) {
         if (closestHookFieldName) {
             // Attaching node to inside of other input
             let arg = closestHookNode.args.get(closestHookFieldName);
@@ -164,13 +184,11 @@ function finishNodeDrag() {
                 draggingNode.parent = closestHookNode.id;
             }
         } else {
-            // Attaching node to end
             let last = findLastInStack(draggingNode);
             if (isInnerHook) {
                 let previousChild = closestHookNode.getFirstChild(script);
                 if (previousChild)
                     last.linkNext(previousChild);
-
 
                 draggingNode.parent = closestHookNode.id;
                 closestHookNode.setFirstChild(draggingNode);
@@ -185,7 +203,6 @@ function finishNodeDrag() {
             let first = findFirstInStack(draggingNode);
             if (first) first.markModified();
         }
-
     }
 
     draggingNode = null;
@@ -203,6 +220,11 @@ export function tickEditor() {
 }
 
 function handleMouseDown(event: MouseEvent) {
+    if (hoveredToolboxGroup) {
+        selectToolboxGroup()
+        return
+    }
+
     if (!hoveredNode) {
         startCameraMove(event);
     } else {

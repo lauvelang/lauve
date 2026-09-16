@@ -35,4 +35,8 @@ public class TypeCoercion {
         if (value instanceof String string) return Boolean.parseBoolean(string);
         return value != null;
     }
+
+    public static boolean fuzzyEquals(double x, double y) {
+        return Math.abs(x - y) < 1E-6;
+    }
 }

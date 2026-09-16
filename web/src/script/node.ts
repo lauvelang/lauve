@@ -105,6 +105,42 @@ export class Node {
         this.lastModified = Date.now();
     }
 
+    erase() {
+        for (let arg of this.args.values()) {
+            if (!arg.resolved) {
+                let argNode = script.lookupNode(arg.value);
+                argNode?.erase()
+            }
+        }
+
+        let next = script.lookupNode(this.next);
+        next?.erase();
+
+        script.removeNode(this);
+    }
+
+    // Turn into object that only contains needed data
+    serialize() {
+        let args: any = {}
+        this.args.forEach((value, key) => {
+            args[key] = [value.resolved, value.value];
+        });
+
+        let obj: any = {
+            opcode: this.opcode.toString(),
+            args: args,
+            parent: this.parent,
+            next: this.next
+        }
+
+        if (this.parent) {
+            obj.x = this.renderBB.x;
+            obj.y = this.renderBB.y;
+        }
+
+        return obj;
+    }
+
     static fromJson(id: string, data: any): Node {
         let parsedId = Id.fromString(data.opcode);
         let args = new Map<string, Argument>();
@@ -124,9 +160,12 @@ export class Node {
         for (const part of definition.description) {
             if (part.type !== "input") continue;
 
-            let arg = new Argument(true, part.sample);
+            let arg = new Argument(true, part.sample ?? null);
             args.set(part.id, arg);
         }
+
+        if (definition.has_children)
+            args.set("child", new Argument(true, null));
 
         let id = toolbox ? opcode.toString() : generateNodeId();
         return new Node(id, opcode, args, null, null, 0, 0, toolbox);

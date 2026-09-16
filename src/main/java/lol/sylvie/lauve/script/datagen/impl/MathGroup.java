@@ -31,6 +31,7 @@ public class MathGroup extends BlockGroup {
         defineDualOperand(id("subtract"));
         defineDualOperand(id("multiply"));
         defineDualOperand(id("divide"));
+        defineDualOperand(id("modulo"));
 
         define(Definition.builder(id("random_number"))
                 .shape(NodeShape.INPUT)

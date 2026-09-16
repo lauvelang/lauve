@@ -40,6 +40,18 @@ export function promptLoad(event: KeyboardEvent) {
     event.preventDefault();
 }
 
+export function promptSave(event: KeyboardEvent) {
+    const content = JSON.stringify(script.serialize());
+    const file = new Blob([content], {type: 'text/plain'});
+
+    const button = document.createElement("a");
+    button.setAttribute("href", window.URL.createObjectURL(file));
+    button.setAttribute("download", script.name);
+    button.click();
+
+    event.preventDefault();
+}
+
 export function initState() {
     addScript(Script.newScript());
 
@@ -51,6 +63,10 @@ export function initState() {
             case 'o': {
                 promptLoad(event);
                 break
+            }
+            case 's': {
+                promptSave(event);
+                break;
             }
         }
     })

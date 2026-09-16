@@ -26,6 +26,10 @@
     },
     "get": {
       "get": "value of"
+    },
+    "increment": {
+      "increment": "increment",
+      "by": "by"
     }
   },
   "math": {
@@ -42,6 +46,9 @@
     "multiply": {
       "operand": "×"
     },
+    "modulo": {
+      "operand": "mod"
+    },
     "random_number": {
       "generate": "random number",
       "to": "to"
@@ -57,6 +64,12 @@
     },
     "greater_than": {
       "operand": ">"
+    },
+    "and": {
+      "operand": "and"
+    },
+    "or": {
+      "operand": "or"
     }
   }
 }

@@ -1,16 +1,14 @@
 package lol.sylvie.lauve.script.operation;
 
 //import lol.sylvie.lauve.script.operation.impl.control.SetupOperation;
-import lol.sylvie.lauve.script.operation.impl.condition.EqualsOperation;
-import lol.sylvie.lauve.script.operation.impl.condition.GreaterThanOperation;
-import lol.sylvie.lauve.script.operation.impl.condition.LessThanOperation;
-import lol.sylvie.lauve.script.operation.impl.condition.NotOperation;
+import lol.sylvie.lauve.script.operation.impl.condition.*;
 import lol.sylvie.lauve.script.operation.impl.control.IfOperation;
 import lol.sylvie.lauve.script.operation.impl.control.LoadOperation;
 import lol.sylvie.lauve.script.operation.impl.control.WhileOperation;
 import lol.sylvie.lauve.script.operation.impl.debug.LogOperation;
 import lol.sylvie.lauve.script.operation.impl.math.*;
 import lol.sylvie.lauve.script.operation.impl.variable.GetOperation;
+import lol.sylvie.lauve.script.operation.impl.variable.IncrementOperation;
 import lol.sylvie.lauve.script.operation.impl.variable.SetOperation;
 import lol.sylvie.lauve.util.Id;
 
@@ -34,7 +32,6 @@ public class Operations {
 
     static {
         // Debug
-
         register(LogOperation::new);
 
         // Math
@@ -42,6 +39,7 @@ public class Operations {
         register(SubtractOperation::new);
         register(MultiplyOperation::new);
         register(DivideOperation::new);
+        register(ModuloOperation::new);
 
         register(RandomNumberOperation::new);
         register(RoundOperation::new);
@@ -52,9 +50,13 @@ public class Operations {
         register(LessThanOperation::new);
         register(GreaterThanOperation::new);
 
+        register(AndOperation::new);
+        register(OrOperation::new);
+
         // Variables
         register(SetOperation::new);
         register(GetOperation::new);
+        register(IncrementOperation::new);
 
         // Control
         register(IfOperation::new);

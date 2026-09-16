@@ -20,12 +20,29 @@ export class Script {
         this.nodes.set(node.id, node);
     }
 
+    removeNode(node: Node) {
+        this.nodes.delete(node.id);
+    }
+
     setCamera(x: number, y: number) {
         this.camera = [x, y];
     }
 
+    serialize() {
+        let operations: any = {};
+        for (let node of this.nodes.values()) {
+            operations[node.id] = node.serialize();
+        }
+
+        return {
+            "camera": this.camera,
+            operations
+        };
+    }
+
     static fromJson(name: string, data: any): Script {
         let script = new Script(name);
+        script.camera = data.camera ?? [0, 0];
         for (const id in data.operations) {
             let node = Node.fromJson(id, data.operations[id]);
             script.addNode(node);

@@ -32,6 +32,9 @@ public class ConditionGroup extends BlockGroup {
         defineComparison(id("less_than"), InputPart.Controller.NUMBER);
         defineComparison(id("greater_than"), InputPart.Controller.NUMBER);
 
+        defineComparison(id("and"), InputPart.Controller.BOOLEAN);
+        defineComparison(id("or"), InputPart.Controller.BOOLEAN);
+
         define(Definition.builder(id("not"))
                 .shape(NodeShape.INPUT)
                 .label("not")

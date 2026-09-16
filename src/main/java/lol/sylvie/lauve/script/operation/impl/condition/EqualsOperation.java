@@ -23,6 +23,13 @@ public class EqualsOperation extends Operation {
             return (first == null && second == null);
         }
 
+        // Fuzzy number equality
+        if (TypeCoercion.canBeNumber(first) && TypeCoercion.canBeNumber(second)) {
+            double firstD = TypeCoercion.toNumber(first);
+            double secondD = TypeCoercion.toNumber(second);
+            return TypeCoercion.fuzzyEquals(firstD, secondD);
+        }
+
         // Equate string values otherwise
         // TODO: Check if this catches all cases
         String firstValue = TypeCoercion.toString(first);

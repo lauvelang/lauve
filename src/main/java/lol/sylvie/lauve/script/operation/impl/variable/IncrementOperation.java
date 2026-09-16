@@ -1,25 +1,28 @@
 package lol.sylvie.lauve.script.operation.impl.variable;
 
-import lol.sylvie.lauve.script.runtime.Runtime;
 import lol.sylvie.lauve.script.operation.Operation;
+import lol.sylvie.lauve.script.runtime.Runtime;
 import lol.sylvie.lauve.script.runtime.interpreter.Context;
 import lol.sylvie.lauve.script.runtime.script.Argument;
 import lol.sylvie.lauve.script.runtime.script.Node;
-import lol.sylvie.lauve.util.Types;
+import lol.sylvie.lauve.util.TypeCoercion;
 
 import java.util.Map;
 
-public class SetOperation extends Operation {
-    public SetOperation() {
-        super("set");
+public class IncrementOperation extends Operation {
+    public IncrementOperation() {
+        super("increment");
     }
 
     @Override
     public Object operate(Context context, Node node, Map<String, Argument> args) {
         String name = string(context, args, "key");
-        Object value = object(context, args, "value");
+        double amount = number(context, args, "amount");
 
-        context.setVariable(name, value, bool(context, args, "global"));
+        Object reference = context.getVariable(name);
+        double current = TypeCoercion.toNumber(reference);
+
+        context.setVariable(name, current + amount, bool(context, args, "global"));
         return null;
     }
 }

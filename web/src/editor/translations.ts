@@ -8,7 +8,7 @@ export function lookupForNode(opcode: Id, part: string) {
 }
 
 export function lookupGroupName(name: string) {
-    return translations?.[name]
+    return translations?.[name]["_name"]
 }
 
 export async function loadTranslations(lang_code: string) {

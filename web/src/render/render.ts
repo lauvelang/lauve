@@ -4,7 +4,7 @@ import {Argument, Node} from "../script/node";
 import {script} from "../editor/state";
 import {DEFINITIONS, lookupColor, NodeShapeConnectivity} from "../script/definitions";
 import {lookupForNode, lookupGroupName} from "../editor/translations";
-import {Id, Rectangle} from "../utils";
+import {Id, pointInBounds, Rectangle} from "../utils";
 import {draggingNode, initEditor, isDraggingNode, tickEditor} from "../editor/editor";
 import {hslToRgb, intArrayToString, rgbToHsl} from "./color";
 let flavor = flavors.mocha.colors;
@@ -140,7 +140,7 @@ export let closestHookFieldName: string | null = null;
 export let isInnerHook = false;
 
 function compareHookPoint(x: number, y: number, node: Node, inner: boolean, fieldName: string | null = null) {
-    if (!draggingNode || node === draggingNode) return;
+    if (!draggingNode || node === draggingNode || node.template) return;
 
     let isDraggedInput = draggingNode.definition.shape === "input";
     if (!isDraggedInput && fieldName) return;
@@ -273,7 +273,9 @@ export function renderFullNode(root: Node) {
     let tailHeight = CHILD_HAVER_SPACE;
 
     // Handle any immediate state
-    if (root.renderBB.isInside(workMouseX, workMouseY) && !shouldDeferToToolbox(root, canvasMouseX)) {
+    let testMouseX = root.template ? canvasMouseX : workMouseX;
+    let testMouseY = root.template ? canvasMouseY : workMouseY;
+    if (root.renderBB.isInside(testMouseX, testMouseY) && !shouldDeferToToolbox(root, canvasMouseX)) {
         hoveredNode = root;
         hoveredField = null;
     }
@@ -360,7 +362,7 @@ export function renderFullNode(root: Node) {
                     ctx.fillText(arg.value !== null ? arg.value : "", tx, ty)
 
                     let fieldRect = new Rectangle(cx, fy, fWidth, FIELD_HEIGHT);
-                    if (fieldRect.isInside(workMouseX, workMouseY) && !shouldDeferToToolbox(root, canvasMouseX)) {
+                    if (!root.template && fieldRect.isInside(workMouseX, workMouseY) && !shouldDeferToToolbox(root, canvasMouseX)) {
                         hoveredField = part.id;
                         hoveredFieldRect = fieldRect;
                     }
@@ -427,6 +429,7 @@ function initToolbox() {
             let opcode = new Id(group, path);
             let node = Node.defaultOf(opcode, true);
 
+            calculateSizes(node);
             defaults.push(node);
         }
 
@@ -434,24 +437,95 @@ function initToolbox() {
     }
 }
 
+export function xInToolbox(x: number) {
+    return x < toolboxWidth
+}
+
 function shouldDeferToToolbox(node: Node, x: number) {
     if (node.template) return false;
 
-    return x < toolboxWidth;
+    return xInToolbox(x);
 }
 
-const GROUP_ICON_INSET = 8;
+const GROUP_ICON_INSET = 24;
+const ICON_SIZE = MINIMIZED_TOOLBOX_WIDTH - (GROUP_ICON_INSET * 2);
+const TEXT_MARGIN = 8;
+const GROUP_ICON_MARGIN = 24;
+const GROUP_BUTTON_HEIGHT = ICON_SIZE + TEXT_MARGIN + GROUP_ICON_MARGIN;
+
+const TOOLBOX_NODE_MARGIN = 24;
+
+export let selectedToolboxGroup: string | null = null;
+export let hoveredToolboxGroup: string | null = null;
 function drawToolbox() {
     fillColor(flavor.base.hex)
     ctx.fillRect(0, 0, toolboxWidth, canvas.height);
 
+    smallFont()
+    fontAlignment("center", "top")
+    let tx = MINIMIZED_TOOLBOX_WIDTH / 2;
+    let y = GROUP_ICON_INSET;
+
+    toolboxWidth = MINIMIZED_TOOLBOX_WIDTH;
+
     for (let group in DEFINITIONS) {
         let name = lookupGroupName(group)
+        let color = lookupColor(group)
+        let colorAsString = intArrayToString(color);
 
+        if (pointInBounds(0, y, MINIMIZED_TOOLBOX_WIDTH, GROUP_BUTTON_HEIGHT, canvasMouseX, canvasMouseY)) {
+            hoveredToolboxGroup = group;
+        }
 
+        fillColor(colorAsString)
+        strokeColor(group === selectedToolboxGroup ?
+            flavor.text.hex :
+            group === hoveredToolboxGroup ? flavor.subtext0.hex : colorAsString);
+        strokeAndFillRect(GROUP_ICON_INSET, y, ICON_SIZE, ICON_SIZE)
+
+        y += ICON_SIZE + TEXT_MARGIN;
+        ctx.fillText(name, tx, y)
+
+        y += GROUP_ICON_MARGIN;
     }
+
+    resetFont()
+
+    strokeColor(flavor.surface0.hex)
+
+    ctx.beginPath();
+    ctx.moveTo(MINIMIZED_TOOLBOX_WIDTH, 0);
+    ctx.lineTo(MINIMIZED_TOOLBOX_WIDTH, canvas.height);
+    ctx.stroke();
+
+    if (!selectedToolboxGroup) return;
+
+    let x = MINIMIZED_TOOLBOX_WIDTH + TOOLBOX_NODE_MARGIN;
+    toolboxWidth += TOOLBOX_NODE_MARGIN
+    y = TOOLBOX_NODE_MARGIN;
+    let maxNodeWidth = 0;
+
+    for (let node of TOOLBOX_NODES.get(selectedToolboxGroup)!) {
+        node.renderBB.setPos(x, y);
+        renderFullNode(node);
+
+        maxNodeWidth = Math.max(maxNodeWidth, node.renderBB.width);
+        y += node.renderBB.height;
+        y += TOOLBOX_NODE_MARGIN;
+    }
+
+    toolboxWidth += maxNodeWidth + TOOLBOX_NODE_MARGIN;
+
+    strokeColor(flavor.surface0.hex)
+    ctx.beginPath();
+    ctx.moveTo(toolboxWidth, 0);
+    ctx.lineTo(toolboxWidth, canvas.height);
+    ctx.stroke();
 }
 
+export function selectToolboxGroup() {
+    selectedToolboxGroup = hoveredToolboxGroup == selectedToolboxGroup ? null : hoveredToolboxGroup;
+}
 
 // I don't like this, but just drawing the lines myself was too slow
 const GRID_SIZE = 32;
@@ -459,6 +533,15 @@ function updateBackground() {
     let xOffset = script.camera[0] % GRID_SIZE;
     let yOffset = script.camera[1] % GRID_SIZE;
     document.body.style.backgroundPosition = `${xOffset}px ${yOffset}px`;
+}
+
+
+function cameraSpace() {
+    ctx.translate(script.camera[0], script.camera[1]);
+}
+
+function canvasSpace() {
+    ctx.translate(-script.camera[0], -script.camera[1]);
 }
 
 function draw(delta: number = 0) {
@@ -470,8 +553,7 @@ function draw(delta: number = 0) {
     ctx.lineWidth = 2;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.save();
-    ctx.translate(script.camera[0], script.camera[1]);
+    cameraSpace()
 
     // Reset immediate state
     hoveredField = null;
@@ -482,17 +564,18 @@ function draw(delta: number = 0) {
     closestHookFieldName = null;
     isInnerHook = false
 
+    hoveredToolboxGroup = null;
+
     // Render stuff
     let renderables = Array.from(script.nodes.values())
         .filter(n => !n.parent)
+        .filter(n => n !== draggingNode)
         .sort((a, b) => a.lastModified - b.lastModified);
     for (let node of renderables) {
         drawNodeStack(node, node.renderBB.x, node.renderBB.y);
     }
 
-    drawHookIndicator();
-
-    ctx.restore();
+    canvasSpace();
 
     // Toolbox
     drawToolbox()
@@ -500,8 +583,17 @@ function draw(delta: number = 0) {
     // Handle dragging, clicking, etc.
     tickEditor()
 
+    if (draggingNode) {
+        cameraSpace()
+        drawNodeStack(draggingNode, draggingNode.renderBB.x, draggingNode.renderBB.y);
+        drawHookIndicator();
+        canvasSpace()
+    }
+
+
     // Debugging information
     let frameDelta = performance.now() - frameStart;
+    resetFont()
     fontAlignment("right", "top");
 
     const debugLines: [string, string][] = [
@@ -510,8 +602,9 @@ function draw(delta: number = 0) {
         [flavor.yellow.hex, "N: " + (hoveredNode != null ? (<Node> hoveredNode).id : "[no hover]")],
         [flavor.yellow.hex, "F: " + (hoveredField != null ? hoveredField : "[no field]")],
         [flavor.green.hex, `R: ${canvasMouseX}, ${canvasMouseY}`],
-        [flavor.green.hex, `C: ${workMouseX}, ${workMouseY}`],
-        [flavor.blue.hex, `${closestHookNode} (${closestHookPointDist}px)`]
+        [flavor.green.hex, `C: ${script.camera[0]}, ${script.camera[1]}`],
+        [flavor.blue.hex, `${closestHookNode} (${closestHookPointDist}px)`],
+        [flavor.mauve.hex, `G: ${hoveredToolboxGroup}`]
     ]
 
     for (let i = 0; i < debugLines.length; i++) {

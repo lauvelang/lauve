@@ -30,10 +30,12 @@ public record Node(
             boolean computed = array.get(0).getAsBoolean();
 
             Argument argument;
-            JsonPrimitive primitive = array.get(1).getAsJsonPrimitive();
+            JsonElement value = array.get(1);
+            JsonPrimitive primitive = value.isJsonNull() ? null : value.getAsJsonPrimitive();
             if (computed) {
                 argument = new Argument(Types.closestJava(primitive));
             } else {
+                assert primitive != null;
                 String stringRid = primitive.getAsString();
                 argument = new Argument(stringRid);
             }

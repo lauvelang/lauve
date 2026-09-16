@@ -31,5 +31,12 @@ public class VariableGroup extends BlockGroup {
                 .label("get")
                 .input("key", InputPart.Controller.VARIABLE)
                 .build());
+
+        define(Definition.builder(id("increment"))
+                .label("increment")
+                .input("key", InputPart.Controller.VARIABLE)
+                .label("by")
+                .input("amount", InputPart.Controller.NUMBER)
+                .build());
     }
 }

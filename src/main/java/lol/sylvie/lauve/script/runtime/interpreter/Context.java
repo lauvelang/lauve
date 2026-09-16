@@ -1,13 +1,11 @@
 package lol.sylvie.lauve.script.runtime.interpreter;
 
+import lol.sylvie.lauve.script.runtime.Runtime;
 import lol.sylvie.lauve.script.runtime.script.Node;
 import lol.sylvie.lauve.script.runtime.script.Script;
 import lol.sylvie.lauve.util.Constants;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 
@@ -34,6 +32,21 @@ public class Context {
 
     public void setLocal(String name, Object value) {
         locals.put(name, value);
+    }
+
+    public Object getVariable(String name) {
+        Object local = this.getLocal(name);
+        if (local != null) return local;
+
+        return Runtime.getGlobal(name);
+    }
+
+    public void setVariable(String name, Object value, boolean global) {
+        if (global) {
+            Runtime.setGlobal(name, value);
+        } else {
+            this.setLocal(name, value);
+        }
     }
 
     public void log(String text, Object... args) {

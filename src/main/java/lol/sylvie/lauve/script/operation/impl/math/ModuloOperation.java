@@ -1,22 +1,23 @@
-package lol.sylvie.lauve.script.operation.impl.variable;
+package lol.sylvie.lauve.script.operation.impl.math;
 
-import lol.sylvie.lauve.script.runtime.Runtime;
 import lol.sylvie.lauve.script.operation.Operation;
 import lol.sylvie.lauve.script.runtime.interpreter.Context;
 import lol.sylvie.lauve.script.runtime.script.Argument;
 import lol.sylvie.lauve.script.runtime.script.Node;
-import lol.sylvie.lauve.util.Types;
 
 import java.util.Map;
 
-public class GetOperation extends Operation {
-    public GetOperation() {
-        super("get");
+public class ModuloOperation extends Operation {
+    public ModuloOperation() {
+        super("modulo");
     }
 
     @Override
     public Object operate(Context context, Node node, Map<String, Argument> args) {
-        String name = string(context, args, "key");
-        return context.getVariable(name);
+        double first = number(context, args, "first");
+        double second = number(context, args, "second");
+        if (second == 0) return Double.MAX_VALUE;
+
+        return first % second;
     }
 }
