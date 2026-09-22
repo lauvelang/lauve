@@ -53,3 +53,9 @@ export function hslToRgb(h: number, s: number, l: number): [number, number, numb
 export function intArrayToString(color: [number, number, number]) {
     return `rgb(${color[0]}, ${color[1]}, ${color[2]})`
 }
+
+export function darkenColor(color: [number, number, number]) {
+    let darkened = rgbToHsl(...color);
+    darkened[2] *= 0.9;
+    return hslToRgb(...darkened)
+}

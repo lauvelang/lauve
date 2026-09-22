@@ -1,12 +1,13 @@
-import { flavors } from "@catppuccin/palette";
+import {flavors} from "@catppuccin/palette";
 import {FONT, SMALL_FONT} from "./font";
 import {Argument, Node} from "../script/node";
 import {script} from "../editor/state";
-import {DEFINITIONS, lookupColor, NodeShapeConnectivity} from "../script/definitions";
-import {lookupForNode, lookupGroupName} from "../editor/translations";
+import {DEFINITIONS, InputController, lookupColor, NodeShapeConnectivity, Part} from "../script/definitions";
+import {lookupForNode, lookupForOption, lookupGroupName} from "../editor/translations";
 import {Id, pointInBounds, Rectangle} from "../utils";
 import {draggingNode, initEditor, isDraggingNode, tickEditor} from "../editor/editor";
-import {hslToRgb, intArrayToString, rgbToHsl} from "./color";
+import {darkenColor, intArrayToString} from "./color";
+
 let flavor = flavors.mocha.colors;
 
 export const canvas = document.querySelector("canvas")!;
@@ -129,8 +130,9 @@ let workMouseY = 0;
 
 // Editor logic stuff
 export let hoveredNode: Node | null = null;
-export let hoveredFieldRect: Rectangle | null = null;
-export let hoveredField: string | null = null;
+export let hoveredFieldRect: Rectangle | null;
+export let hoveredField: Part | null = null;
+export let hoveredFieldController: InputController | null;
 
 const MAX_HOOK_DISTANCE = 32;
 let closestHookPointDist = Infinity;
@@ -140,7 +142,7 @@ export let closestHookFieldName: string | null = null;
 export let isInnerHook = false;
 
 function compareHookPoint(x: number, y: number, node: Node, inner: boolean, fieldName: string | null = null) {
-    if (!draggingNode || node === draggingNode || node.template) return;
+    if (!draggingNode || node === draggingNode || node.template || xInToolbox(x + script.camera[0])) return;
 
     let isDraggedInput = draggingNode.definition.shape === "input";
     if (!isDraggedInput && fieldName) return;
@@ -195,11 +197,17 @@ function getStackDimensions(root: Node, recalculate: boolean = true): [number, n
     return [width, height];
 }
 
-function calculateFieldWidth(arg: Argument): number {
-    let text = arg.value ?? "";
+function calculateFieldWidth(opcode: Id, part: Part, arg: Argument): number {
+    let text = getArgText(opcode, part, arg);
     let contentMetrics = ctx.measureText(text);
 
     return Math.max(contentMetrics.width, FIELD_MIN_WIDTH) + FIELD_PADDING;
+}
+
+function getArgText(opcode: Id, part: Part, arg: Argument) {
+    if (part.type === "input") return arg.value === null ? "" : arg.value;
+
+    return lookupForOption(opcode, part.id, arg.value) + " ⏷";
 }
 
 function calculateSizes(root: Node) {
@@ -218,12 +226,12 @@ function calculateSizes(root: Node) {
                 width += contentMetrics.width;
                 break
             }
-
+            case "option":
             case "input": {
                 let arg = root.args.get(part.id)!;
 
                 if (arg.resolved) {
-                    let fWidth = calculateFieldWidth(arg);
+                    let fWidth = calculateFieldWidth(root.opcode, part, arg);
                     width += fWidth;
                     height = Math.max(height, FIELD_HEIGHT + doublePaddingH);
                 } else {
@@ -234,6 +242,7 @@ function calculateSizes(root: Node) {
                     width += node.renderBB.width;
                     height = Math.max(height, node.renderBB.height + doublePaddingH);
                 }
+                break
             }
         }
         width += PART_MARGIN;
@@ -266,6 +275,8 @@ export function renderFullNode(root: Node) {
     let y = root.renderBB.y;
 
     let color = lookupColor(root.opcode.namespace)
+    let colorString = intArrayToString(color);
+    let darkColorString = intArrayToString(darkenColor(color));
 
     let blockWidth = root.renderBB.width;
     let blockHeight = root.renderBB.height;
@@ -278,6 +289,7 @@ export function renderFullNode(root: Node) {
     if (root.renderBB.isInside(testMouseX, testMouseY) && !shouldDeferToToolbox(root, canvasMouseX)) {
         hoveredNode = root;
         hoveredField = null;
+        hoveredFieldController = null;
     }
 
     if (isDraggingNode && !isDraggedInput) {
@@ -303,12 +315,8 @@ export function renderFullNode(root: Node) {
     }
 
     // Render self
-    fillColor(intArrayToString(color));
-
-    let outline = rgbToHsl(...color);
-    outline[2] *= 0.9;
-    outline = hslToRgb(...outline)
-    strokeColor(intArrayToString(outline));
+    fillColor(colorString);
+    strokeColor(darkColorString);
 
     if (definition.shape !== "input") {
         let connectivity  = NodeShapeConnectivity[definition.shape];
@@ -344,14 +352,16 @@ export function renderFullNode(root: Node) {
                 cx += contentMetrics.width;
                 break;
             }
+            case "option":
             case "input": {
+                let isOption = part.type === "option";
                 let arg = root.args.get(part.id)!;
                 if (arg.resolved) {
-                    let fWidth = calculateFieldWidth(arg);
+                    let fWidth = calculateFieldWidth(root.opcode, part, arg);
 
                     let fy = y + ((blockHeight - FIELD_HEIGHT) / 2);
-                    fillColor(flavor.text.hex);
-                    strokeColor(flavor.subtext0.hex);
+                    fillColor(isOption ? colorString : flavor.text.hex);
+                    strokeColor(isOption ? darkColorString : flavor.subtext0.hex);
 
                     strokeAndFillRect(cx, fy, fWidth, FIELD_HEIGHT);
 
@@ -359,12 +369,13 @@ export function renderFullNode(root: Node) {
                     fontAlignment("center", "middle")
                     let tx = cx + (fWidth / 2);
                     let ty = fy + (FIELD_HEIGHT / 2);
-                    ctx.fillText(arg.value !== null ? arg.value : "", tx, ty)
+                    ctx.fillText(getArgText(root.opcode, part, arg), tx, ty)
 
                     let fieldRect = new Rectangle(cx, fy, fWidth, FIELD_HEIGHT);
                     if (!root.template && fieldRect.isInside(workMouseX, workMouseY) && !shouldDeferToToolbox(root, canvasMouseX)) {
-                        hoveredField = part.id;
+                        hoveredField = part;
                         hoveredFieldRect = fieldRect;
+                        hoveredFieldController = part.type === "input" ? part.controller : InputController.SELECT;
                     }
 
                     if (!draggingNode?.isPartOfSelf(root)) compareHookPoint(tx, ty, root, false, part.id);
@@ -600,7 +611,7 @@ function draw(delta: number = 0) {
         [flavor.text.hex, `${frameDelta.toFixed(1)}ms`],
         [flavor.red.hex, `${script.name}`],
         [flavor.yellow.hex, "N: " + (hoveredNode != null ? (<Node> hoveredNode).id : "[no hover]")],
-        [flavor.yellow.hex, "F: " + (hoveredField != null ? hoveredField : "[no field]")],
+        [flavor.yellow.hex, "F: " + (hoveredField != null ? (<Part> hoveredField).id : "[no field]")],
         [flavor.green.hex, `R: ${canvasMouseX}, ${canvasMouseY}`],
         [flavor.green.hex, `C: ${script.camera[0]}, ${script.camera[1]}`],
         [flavor.blue.hex, `${closestHookNode} (${closestHookPointDist}px)`],

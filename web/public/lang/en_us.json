@@ -22,7 +22,11 @@
     "_name": "Variable",
     "set": {
       "set": "set",
-      "to": "to"
+      "to": "to",
+      "scope": {
+        "local": "locally",
+        "global": "globally"
+      }
     },
     "get": {
       "get": "value of"

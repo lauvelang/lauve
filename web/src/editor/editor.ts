@@ -1,14 +1,22 @@
 import {
-    canvas,
     canvasMouseX,
-    canvasMouseY, closestHookFieldName,
+    canvasMouseY,
+    closestHookFieldName,
     closestHookNode,
-    hoveredField, hoveredFieldRect,
-    hoveredNode, hoveredToolboxGroup, isInnerHook, selectedToolboxGroup, selectToolboxGroup,
-    setCursor, xInToolbox
+    hoveredField,
+    hoveredFieldController,
+    hoveredFieldRect,
+    hoveredNode,
+    hoveredToolboxGroup,
+    isInnerHook,
+    selectToolboxGroup,
+    setCursor,
+    xInToolbox
 } from "../render/render";
 import {script} from "./state";
 import {Argument, findFirstInStack, findLastInStack, Node} from "../script/node";
+import {InputController} from "../script/definitions";
+import {lookupForOption} from "./translations";
 
 // You can't drag the camera and a node at the same time, so these are shared
 let dragStart: [number, number] = [0, 0];  // Where the mouse was when starting a move
@@ -35,13 +43,13 @@ function tickCameraMove() {
 // Modify the cursor depending on editor context
 function tickCursor() {
     if (isDraggingNode) {
-        setCursor("grabbing");
+        setCursor(xInToolbox(canvasMouseX) ? "no-drop" : "grabbing");
         return
     }
 
     if (hoveredNode) {
         if (hoveredField) {
-            setCursor("text");
+            setCursor(hoveredFieldController == InputController.SELECT ? "pointer" : "text");
         } else {
             setCursor("grab")
         }
@@ -52,20 +60,71 @@ function tickCursor() {
     if (hoveredToolboxGroup) {
         setCursor("pointer")
     }
+
+
 }
 
 // Node field data entry
 let enteringNode: Node | null = null;
 let enteringArg: Argument | null = null;
-let fieldInput: HTMLInputElement | null = null;
+let fieldInput: HTMLElement | null = null;
 function endFieldEnter() {
     if (!enteringArg || !fieldInput) return
 
-    enteringArg.value = fieldInput.value;
-    enteringArg = null;
+    switch (fieldInput.tagName) {
+        case "select": {
+            enteringArg.value = (fieldInput as HTMLSelectElement).value;
+            break;
+        }
+        default: {
+            enteringArg.value = (fieldInput as HTMLInputElement).value;
+            break
+        }
+    }
 
+    enteringArg = null;
     fieldInput.remove();
     fieldInput = null;
+}
+
+function createInput() {
+    enteringArg = enteringNode!.args.get(hoveredField!.id)!;
+    switch (hoveredFieldController) {
+        case InputController.SELECT: {
+            // TODO: Select input is really weird right now
+            let select = document.createElement("select")
+            if (!hoveredField || hoveredField.type != "option") throw Error("Tried to use select controller for non-option or null arg");
+
+            let i = 0;
+            for (let option of hoveredField.options) {
+                let optionNode = document.createElement("option");
+                optionNode.value = option;
+                if (option === enteringArg.value) optionNode.selected = true;
+                optionNode.textContent = lookupForOption(hoveredNode!.opcode, hoveredField.id, option);
+
+                select.appendChild(optionNode);
+                i++;
+            }
+
+            select.addEventListener("change", (e) => {
+                endFieldEnter();
+            })
+
+            select.addEventListener("focus", (e) => {
+                select.showPicker()
+            })
+
+            return select;
+        }
+        default: {
+            let input = document.createElement("input");
+
+            input.value = enteringArg.value;
+
+            input.select();
+            return input;
+        }
+    }
 }
 
 function startFieldEnter(event: MouseEvent) {
@@ -76,12 +135,8 @@ function startFieldEnter(event: MouseEvent) {
     if (!hoveredNode || !hoveredField || !hoveredFieldRect) return
     enteringNode = hoveredNode;
 
-    fieldInput = document.createElement("input");
+    fieldInput = createInput();
     fieldInput.classList.add("popup-input");
-
-    enteringArg = enteringNode.args.get(hoveredField)!;
-    fieldInput.value = enteringArg.value;
-
     fieldInput.style.left = hoveredFieldRect.x + script.camera[0] + "px";
     fieldInput.style.top = hoveredFieldRect.y + script.camera[1] + "px";
     fieldInput.style.width = hoveredFieldRect.width + "px";
@@ -97,7 +152,6 @@ function startFieldEnter(event: MouseEvent) {
     });
 
     fieldInput.focus();
-    fieldInput.select();
     event.preventDefault();
 }
 

@@ -158,9 +158,9 @@ export class Node {
 
         let args = new Map<string, Argument>();
         for (const part of definition.description) {
-            if (part.type !== "input") continue;
+            if (part.type !== "input" && part.type !== "option") continue;
 
-            let arg = new Argument(true, part.sample ?? null);
+            let arg = new Argument(true, part.type === "option" ? part.options[0] : part.sample ?? null);
             args.set(part.id, arg);
         }
 

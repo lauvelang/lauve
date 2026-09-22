@@ -7,6 +7,11 @@ export function lookupForNode(opcode: Id, part: string) {
     return node?.[part] ?? part;
 }
 
+export function lookupForOption(opcode: Id, part: string, selected: string) {
+    let map = lookupForNode(opcode, part);
+    return map[selected];
+}
+
 export function lookupGroupName(name: string) {
     return translations?.[name]["_name"]
 }
