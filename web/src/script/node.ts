@@ -39,6 +39,11 @@ export function findFirstInStack(root: Node): Node {
     return current;
 }
 
+export const SUBSTACK_PREFIX = "substack";
+export function getSubstackArg(n: number): string {
+    return SUBSTACK_PREFIX + n;
+}
+
 export class Node {
     id: string; // Unique ID to each node
     opcode: Id; // The type of block this is
@@ -47,6 +52,8 @@ export class Node {
     next: string | null; // The node below this node
 
     renderBB: Rectangle;
+    titleBB: Rectangle;
+
     lastModified: number;
     template: boolean;
 
@@ -60,23 +67,33 @@ export class Node {
         this.next = next;
 
         this.renderBB = new Rectangle(x, y, 0, 0);
+        this.titleBB = new Rectangle(x, y, 0, 0);
+
         this.lastModified = 0; this.markModified();
         this.template = template;
 
         this.definition = lookupDefinition(this.opcode);
     }
 
-    mayHaveChild(): boolean {
-        return this.definition.has_children;
+    mayHaveSubstacks(): boolean {
+        return this.definition.substacks > 0;
     }
 
-    getFirstChild(script: Script): Node | undefined {
-        let cid = this.args.get("child")?.value;
+    getSubstack(script: Script, n: number): Node | undefined {
+        let cid = this.args.get(getSubstackArg(n))?.value;
         return script.lookupNode(cid);
     }
 
-    setFirstChild(node: Node | null) {
-        let arg = this.args.get("child");
+    getSubstackIndex(script: Script, node: Node) {
+        for (let n = 0; n < this.definition.substacks; n++) {
+            let stack = this.getSubstack(script, n);
+            if (stack === node) return n;
+        }
+        return -1;
+    }
+
+    setSubstack(node: Node | null, n: number) {
+        let arg = this.args.get(getSubstackArg(n));
         if (!arg) return;
 
         arg.value = node ? node.id : null;
@@ -164,8 +181,9 @@ export class Node {
             args.set(part.id, arg);
         }
 
-        if (definition.has_children)
-            args.set("child", new Argument(true, null));
+        for (let i = 0; i < definition.substacks; i++) {
+            args.set(getSubstackArg(i), new Argument(true, null));
+        }
 
         let id = toolbox ? opcode.toString() : generateNodeId();
         return new Node(id, opcode, args, null, null, 0, 0, toolbox);

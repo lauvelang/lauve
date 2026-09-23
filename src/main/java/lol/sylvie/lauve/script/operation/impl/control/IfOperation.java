@@ -16,7 +16,7 @@ public class IfOperation extends Operation {
     @Override
     public Object operate(Context context, Node node, Map<String, Argument> args) {
         if (bool(context, args, "condition")) {
-            Node target = node(context, args, "child");
+            Node target = substack(context, args, 0);
             Interpreter.walk(context, target);
         }
 

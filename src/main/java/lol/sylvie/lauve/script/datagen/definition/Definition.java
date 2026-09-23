@@ -28,13 +28,13 @@ public class Definition implements JsonSerializable {
     private List<Part> parts;
 
     @Builder.Default
-    private boolean hasChildren = false;
+    private int substacks = 0;
 
     @Override
     public JsonObject toJson() {
         JsonObject root = new JsonObject();
 
-        root.addProperty("has_children", this.hasChildren);
+        if (substacks > 0) root.addProperty("substacks", this.substacks);
         root.addProperty("shape", this.shape.name().toLowerCase(Locale.ROOT));
 
         JsonArray array = new JsonArray();
@@ -51,6 +51,10 @@ public class Definition implements JsonSerializable {
     public static class DefinitionBuilder {
         public DefinitionBuilder label(String id) {
             return this.part(new LabelPart(id));
+        }
+
+        public DefinitionBuilder label(String id, int stack) {
+            return this.part(new LabelPart(id, stack));
         }
 
         public DefinitionBuilder input(String id, InputPart.Controller controller, @Nullable String sample) {

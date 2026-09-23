@@ -3,10 +3,7 @@ package lol.sylvie.lauve.script.operation;
 import lol.sylvie.lauve.script.runtime.interpreter.Context;
 import lol.sylvie.lauve.script.runtime.script.Argument;
 import lol.sylvie.lauve.script.runtime.script.Node;
-import lol.sylvie.lauve.util.Id;
-import lol.sylvie.lauve.util.IdentifiedObject;
-import lol.sylvie.lauve.util.TypeCoercion;
-import lol.sylvie.lauve.util.Types;
+import lol.sylvie.lauve.util.*;
 import lombok.Getter;
 
 import java.util.Map;
@@ -39,6 +36,10 @@ public abstract class Operation extends IdentifiedObject {
     protected static Node node(Context context, Map<String, Argument> args, String key) {
         String reference = string(context, args, key);
         return context.getScript().getNode(reference);
+    }
+
+    protected static Node substack(Context context, Map<String, Argument> args, int n) {
+        return node(context, args, Constants.SUBSTACK_PREFIX + n);
     }
 
     protected static String string(Context context, Map<String, Argument> args, String key) {

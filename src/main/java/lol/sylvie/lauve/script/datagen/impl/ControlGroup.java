@@ -19,7 +19,7 @@ public class ControlGroup extends BlockGroup {
 
     protected void defineConditional(Id id) {
         define(Definition.builder(id)
-                .hasChildren(true)
+                .substacks(1)
                 .label("control")
                 .input("condition", InputPart.Controller.BOOLEAN, "true")
                 .build());
@@ -28,6 +28,13 @@ public class ControlGroup extends BlockGroup {
     @Override
     public void init() {
         defineConditional(id("if"));
+        define(Definition.builder(id("ifelse"))
+                .substacks(2)
+                .label("if")
+                .input("condition", InputPart.Controller.BOOLEAN, "true")
+                .label("else", 1)
+                .build());
+
         defineConditional(id("while"));
 
         define(Definition.builder(id("load"))

@@ -9,4 +9,6 @@ public class Constants {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     public static final String MOD_NAME = "Lauve";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
+
+    public static final String SUBSTACK_PREFIX = "substack";
 }

@@ -16,14 +16,11 @@ public abstract class BlockGroup {
     private final HashMap<Id, Definition> definitions = new HashMap<>();
 
     private final String namespace;
-    protected final File folder;
     protected final int[] color;
 
     protected BlockGroup(String namespace, int[] color) {
         this.namespace = namespace;
         this.color = color;
-
-        this.folder = new File("./" + this.namespace);
     }
 
     protected void define(Definition definition) {

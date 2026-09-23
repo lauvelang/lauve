@@ -28,12 +28,12 @@ export enum InputController {
 export type Part = {
     id: string
 } & (
-    { type: 'label' } |
+    { type: 'label', stack?: number } |
     { type: 'input', controller: InputController, sample: string } |
     { type: 'option', options: string[] } );
 
 export type Definition = {
-    has_children: boolean,
+    substacks: number,
     shape: NodeShape,
     description: Part[]
 }

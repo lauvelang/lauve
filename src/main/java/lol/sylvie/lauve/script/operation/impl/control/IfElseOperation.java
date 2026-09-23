@@ -8,17 +8,15 @@ import lol.sylvie.lauve.script.runtime.script.Node;
 
 import java.util.Map;
 
-public class WhileOperation extends Operation {
-    public WhileOperation() {
-        super("while");
+public class IfElseOperation extends Operation {
+    public IfElseOperation() {
+        super("ifelse");
     }
 
     @Override
     public Object operate(Context context, Node node, Map<String, Argument> args) {
-        while (bool(context, args, "condition")) {
-            Node target = substack(context, args, 0);
-            Interpreter.walk(context, target);
-        }
+        Node target = substack(context, args, bool(context, args, "condition") ? 0 : 1);
+        Interpreter.walk(context, target);
 
         return null;
     }

@@ -2,6 +2,7 @@ package lol.sylvie.lauve.script.operation;
 
 //import lol.sylvie.lauve.script.operation.impl.control.SetupOperation;
 import lol.sylvie.lauve.script.operation.impl.condition.*;
+import lol.sylvie.lauve.script.operation.impl.control.IfElseOperation;
 import lol.sylvie.lauve.script.operation.impl.control.IfOperation;
 import lol.sylvie.lauve.script.operation.impl.control.LoadOperation;
 import lol.sylvie.lauve.script.operation.impl.control.WhileOperation;
@@ -60,6 +61,7 @@ public class Operations {
 
         // Control
         register(IfOperation::new);
+        register(IfElseOperation::new);
         register(WhileOperation::new);
         register(LoadOperation::new);
     }

@@ -117,7 +117,6 @@ function isOnScreen(rect: Rectangle) {
     let x2 = x + rect.width;
     let y2 = y + rect.height;
 
-    // b is screen
     return x2 >= 0 && x <= canvas.width && y <= canvas.height && y2 >= 0
 }
 
@@ -139,9 +138,9 @@ let closestHookPointDist = Infinity;
 let closestHookPointPos = [0, 0];
 export let closestHookNode: Node | null = null;
 export let closestHookFieldName: string | null = null;
-export let isInnerHook = false;
+export let innerHookStack = -1;
 
-function compareHookPoint(x: number, y: number, node: Node, inner: boolean, fieldName: string | null = null) {
+function compareHookPoint(x: number, y: number, node: Node, stack: number = -1, fieldName: string | null = null) {
     if (!draggingNode || node === draggingNode || node.template || xInToolbox(x + script.camera[0])) return;
 
     let isDraggedInput = draggingNode.definition.shape === "input";
@@ -161,7 +160,7 @@ function compareHookPoint(x: number, y: number, node: Node, inner: boolean, fiel
     closestHookPointDist = distance;
     closestHookNode = node;
     closestHookFieldName = fieldName;
-    isInnerHook = inner;
+    innerHookStack = stack;
 }
 
 // Rendering
@@ -177,10 +176,10 @@ const FIELD_MIN_WIDTH = 64;
 const FIELD_HEIGHT = 24;
 const FIELD_PADDING = 12;
 
-const CHILD_HAVER_INDENT = 16;
-const CHILD_HAVER_SPACE = 24;
-const CHILD_HAVER_BASE = 24;
-const CHILD_HAVER_OVERHANG = 32;
+const SUBSTACK_INDENT = 16;
+const SUBSTACK_EMPTY_SLOT_HEIGHT = 28;
+const SUBSTACK_TAIL_HEIGHT = 24;
+const SUBSTACK_TAIL_OVERHANG = 32;
 
 function getStackDimensions(root: Node, recalculate: boolean = true): [number, number] {
     let width = 0
@@ -249,17 +248,19 @@ function calculateSizes(root: Node) {
     }
     width -= PART_MARGIN;
 
-    // Nodes with inner nodes
-    if (root.mayHaveChild()) {
-        height += CHILD_HAVER_BASE;
+    root.titleBB.setSize(width, height);
 
-        let child = root.getFirstChild(script);
-        if (child) {
-            let [cWidth, cHeight] = getStackDimensions(child);
-            width = Math.max(width, cWidth + CHILD_HAVER_INDENT + CHILD_HAVER_OVERHANG)
+    // Nodes with inner nodes
+    for (let n = 0; n < definition.substacks; n++) {
+        height += SUBSTACK_TAIL_HEIGHT;
+
+        let substack = root.getSubstack(script, n);
+        if (substack) {
+            let [cWidth, cHeight] = getStackDimensions(substack);
+            width = Math.max(width, cWidth + SUBSTACK_INDENT + SUBSTACK_TAIL_OVERHANG)
             height += cHeight;
         } else {
-            height += CHILD_HAVER_SPACE;
+            height += SUBSTACK_EMPTY_SLOT_HEIGHT;
         }
     }
 
@@ -279,9 +280,7 @@ export function renderFullNode(root: Node) {
     let darkColorString = intArrayToString(darkenColor(color));
 
     let blockWidth = root.renderBB.width;
-    let blockHeight = root.renderBB.height;
-    let child = null;
-    let tailHeight = CHILD_HAVER_SPACE;
+    let substack = null;
 
     // Handle any immediate state
     let testMouseX = root.template ? canvasMouseX : workMouseX;
@@ -292,26 +291,29 @@ export function renderFullNode(root: Node) {
         hoveredFieldController = null;
     }
 
+    let endOfTitleY = root.renderBB.y + root.titleBB.height;
     if (isDraggingNode && !isDraggedInput) {
-        compareHookPoint(root.renderBB.x, root.renderBB.y + blockHeight, root, false)
+        compareHookPoint(root.renderBB.x, endOfTitleY, root)
     }
 
     // Handle child nodes
-    if (root.mayHaveChild()) {
-        blockHeight -= CHILD_HAVER_BASE;
+    let workingY = endOfTitleY;
+    let innerX = root.renderBB.x + SUBSTACK_INDENT;
+    let substackY = []
+    for (let n = 0; n < definition.substacks; n++) {
+        if (!isDraggedInput) compareHookPoint(innerX, workingY, root, n)
 
-        let innerX = root.renderBB.x + CHILD_HAVER_INDENT;
-        child = root.getFirstChild(script);
-        if (child) {
-            let [_, height] = getStackDimensions(child, false);
-            blockHeight -= height;
-            tailHeight = height;
-            drawNodeStack(child, innerX, root.renderBB.y + blockHeight);
+        substack = root.getSubstack(script, n);
+        if (substack) {
+            let [_, height] = getStackDimensions(substack, false);
+            drawNodeStack(substack, innerX, workingY);
+            workingY += height;
         } else {
-            blockHeight -= CHILD_HAVER_SPACE;
+            workingY += SUBSTACK_EMPTY_SLOT_HEIGHT;
         }
 
-        if (!isDraggedInput) compareHookPoint(innerX, root.renderBB.y + blockHeight, root, true)
+        substackY.push(workingY);
+        workingY += SUBSTACK_TAIL_HEIGHT;
     }
 
     // Render self
@@ -321,22 +323,36 @@ export function renderFullNode(root: Node) {
     if (definition.shape !== "input") {
         let connectivity  = NodeShapeConnectivity[definition.shape];
         let topNotch = connectivity.top ? NOTCH_OFFSET : 0;
-        let bottomNotch = connectivity.bottom ? NOTCH_OFFSET + (root.mayHaveChild() ? CHILD_HAVER_INDENT : 0) : 0;
+        let bottomNotch = connectivity.bottom ? NOTCH_OFFSET + (root.mayHaveSubstacks() ? SUBSTACK_INDENT : 0) : 0;
+        // Block background
         notchedRectOutlined(
-            root.renderBB.x, root.renderBB.y, blockWidth, blockHeight, topNotch, bottomNotch);
+            root.renderBB.x, root.renderBB.y, blockWidth, root.titleBB.height, topNotch, bottomNotch);
 
-        if (root.mayHaveChild()) { // draw the tail
-            let bottomY = root.renderBB.y + blockHeight;
+        for (let yi = 0; yi < substackY.length; yi++) {
+            let isLast = yi === substackY.length - 1;
+            let y = substackY[yi];
 
-            notchedRectOutlined(root.renderBB.x, bottomY + tailHeight, blockWidth, CHILD_HAVER_BASE,
-                NOTCH_OFFSET + CHILD_HAVER_INDENT,
-                connectivity.bottom ? NOTCH_OFFSET : 0)
+            notchedRectOutlined(root.renderBB.x, y, root.renderBB.width, SUBSTACK_TAIL_HEIGHT,
+                bottomNotch,
+                isLast ? topNotch : topNotch + SUBSTACK_INDENT);
+        }
 
-            ctx.strokeRect(root.renderBB.x, bottomY, CHILD_HAVER_INDENT, tailHeight);
-            ctx.fillRect(root.renderBB.x + (ctx.lineWidth / 2), bottomY - ctx.lineWidth, CHILD_HAVER_INDENT - ctx.lineWidth, tailHeight + (ctx.lineWidth * 2));
+        if (root.mayHaveSubstacks()) {
+            let tailHeight = root.renderBB.height - root.titleBB.height - SUBSTACK_TAIL_HEIGHT + 2;
+            let tailY = endOfTitleY - 1;
+            fillColor(darkColorString);
+            ctx.fillRect(root.renderBB.x - 1, tailY, SUBSTACK_INDENT + 2, tailHeight)
+            fillColor(colorString);
+            ctx.fillRect(root.renderBB.x + 1, tailY, SUBSTACK_INDENT - 2, tailHeight)
+
+            // this is literally just to cover up the border between each tail thing
+            substackY.forEach(y => {
+                ctx.fillRect(innerX - 2, y + 1, 4, SUBSTACK_TAIL_HEIGHT - 2)
+            })
         }
     } else {
-        strokeAndFillRect(root.renderBB.x, root.renderBB.y, blockWidth, blockHeight);
+        // Input background
+        strokeAndFillRect(root.renderBB.x, root.renderBB.y - 2, blockWidth, root.renderBB.height + 4);
     }
 
     for (let part of definition.description) {
@@ -348,7 +364,7 @@ export function renderFullNode(root: Node) {
 
                 fillColor(flavor.crust.hex);
                 fontAlignment("left", "middle")
-                ctx.fillText(content, cx, y + blockHeight / 2);
+                ctx.fillText(content, cx, y + root.titleBB.height / 2);
                 cx += contentMetrics.width;
                 break;
             }
@@ -359,7 +375,7 @@ export function renderFullNode(root: Node) {
                 if (arg.resolved) {
                     let fWidth = calculateFieldWidth(root.opcode, part, arg);
 
-                    let fy = y + ((blockHeight - FIELD_HEIGHT) / 2);
+                    let fy = y + ((root.titleBB.height - FIELD_HEIGHT) / 2);
                     fillColor(isOption ? colorString : flavor.text.hex);
                     strokeColor(isOption ? darkColorString : flavor.subtext0.hex);
 
@@ -378,13 +394,13 @@ export function renderFullNode(root: Node) {
                         hoveredFieldController = part.type === "input" ? part.controller : InputController.SELECT;
                     }
 
-                    if (!draggingNode?.isPartOfSelf(root)) compareHookPoint(tx, ty, root, false, part.id);
+                    if (!draggingNode?.isPartOfSelf(root)) compareHookPoint(tx, ty, root, -1, part.id);
 
                     cx += fWidth;
                 } else {
                     let node = script.lookupNode(arg.value)!;
                     node.renderBB.x = cx;
-                    node.renderBB.y = y + ((blockHeight - node.renderBB.height) / 2);
+                    node.renderBB.y = y + ((root.titleBB.height - node.renderBB.height) / 2);
                     renderFullNode(node);
                     cx += node.renderBB.width;
                 }
@@ -555,7 +571,7 @@ function canvasSpace() {
     ctx.translate(-script.camera[0], -script.camera[1]);
 }
 
-function draw(delta: number = 0) {
+function draw() {
     let frameStart = performance.now();
 
     // Reset rendering
@@ -573,7 +589,7 @@ function draw(delta: number = 0) {
     closestHookPointDist = Infinity
     closestHookNode = null
     closestHookFieldName = null;
-    isInnerHook = false
+    innerHookStack = -1
 
     hoveredToolboxGroup = null;
 

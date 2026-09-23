@@ -7,8 +7,7 @@ import {
     hoveredFieldController,
     hoveredFieldRect,
     hoveredNode,
-    hoveredToolboxGroup,
-    isInnerHook,
+    hoveredToolboxGroup, innerHookStack,
     selectToolboxGroup,
     setCursor,
     xInToolbox
@@ -197,8 +196,9 @@ function unhookDraggedNode() {
             break;
         }
     } else {
-        if (parent.getFirstChild(script) === draggingNode) {
-            parent.setFirstChild(null)
+        let substack = parent.getSubstackIndex(script, draggingNode)
+        if (substack !== -1) {
+            parent.setSubstack(null, substack);
         } else {
             parent.next = null;
         }
@@ -239,13 +239,13 @@ function finishNodeDrag() {
             }
         } else {
             let last = findLastInStack(draggingNode);
-            if (isInnerHook) {
-                let previousChild = closestHookNode.getFirstChild(script);
+            if (innerHookStack !== -1) {
+                let previousChild = closestHookNode.getSubstack(script, innerHookStack);
                 if (previousChild)
                     last.linkNext(previousChild);
 
                 draggingNode.parent = closestHookNode.id;
-                closestHookNode.setFirstChild(draggingNode);
+                closestHookNode.setSubstack(draggingNode, innerHookStack);
             } else {
                 let previousNext = script.lookupNode(closestHookNode.next);
                 if (previousNext)
