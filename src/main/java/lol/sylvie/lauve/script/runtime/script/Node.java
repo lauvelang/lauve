@@ -7,7 +7,7 @@ import com.google.gson.JsonPrimitive;
 import lol.sylvie.lauve.script.operation.Operation;
 import lol.sylvie.lauve.script.operation.Operations;
 import lol.sylvie.lauve.util.Id;
-import lol.sylvie.lauve.util.Types;
+import lol.sylvie.lauve.util.Serialization;
 import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
@@ -33,7 +33,7 @@ public record Node(
             JsonElement value = array.get(1);
             JsonPrimitive primitive = value.isJsonNull() ? null : value.getAsJsonPrimitive();
             if (computed) {
-                argument = new Argument(Types.closestJava(primitive));
+                argument = new Argument(Serialization.closestJava(primitive));
             } else {
                 assert primitive != null;
                 String stringRid = primitive.getAsString();

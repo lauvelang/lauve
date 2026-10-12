@@ -11,6 +11,12 @@
       "control": "if"
     }
   },
+  "event": {
+    "_name": "Event",
+    "area_effect_cloud_apply": {
+      "name": "⚡ on area effect cloud apply"
+    }
+  },
   "debug": {
     "_name": "Debug",
     "log": {

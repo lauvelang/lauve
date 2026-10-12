@@ -16,6 +16,7 @@ public class ScriptDatagen {
                 new ConditionGroup(),
                 new MathGroup(),
                 new VariableGroup(),
+                new EventGroup(),
                 new DebugGroup()
         );
 

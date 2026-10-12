@@ -141,7 +141,7 @@ export let closestHookFieldName: string | null = null;
 export let innerHookStack = -1;
 
 function compareHookPoint(x: number, y: number, node: Node, stack: number = -1, fieldName: string | null = null) {
-    if (!draggingNode || node === draggingNode || node.template || xInToolbox(x + script.camera[0])) return;
+    if (!draggingNode || node === draggingNode || draggingNode.definition.shape === "start" || node.template || xInToolbox(x + script.camera[0])) return;
 
     let isDraggedInput = draggingNode.definition.shape === "input";
     if (!isDraggedInput && fieldName) return;
@@ -214,6 +214,14 @@ function calculateSizes(root: Node) {
     let height = 0;
 
     let definition = root.definition;
+
+    function handleInnerNode(node: Node) {
+        calculateSizes(node);
+
+        width += node.renderBB.width;
+        height = Math.max(height, node.renderBB.height + doublePaddingH);
+    }
+
     for (let part of definition.description) {
         switch (part.type) {
             case "label": {
@@ -235,13 +243,14 @@ function calculateSizes(root: Node) {
                     height = Math.max(height, FIELD_HEIGHT + doublePaddingH);
                 } else {
                     let node = script.lookupNode(arg.value)!;
-
-                    calculateSizes(node);
-
-                    width += node.renderBB.width;
-                    height = Math.max(height, node.renderBB.height + doublePaddingH);
+                    handleInnerNode(node);
                 }
                 break
+            }
+            case "template": {
+                let tNode = Node.
+
+                break;
             }
         }
         width += PART_MARGIN;

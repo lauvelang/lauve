@@ -30,7 +30,8 @@ export type Part = {
 } & (
     { type: 'label', stack?: number } |
     { type: 'input', controller: InputController, sample: string } |
-    { type: 'option', options: string[] } );
+    { type: 'option', options: string[] } |
+    { type: 'template', opcode: string, args: { [key: string]: any } } );
 
 export type Definition = {
     substacks: number,

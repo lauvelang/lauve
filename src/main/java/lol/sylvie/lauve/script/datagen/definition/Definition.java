@@ -3,10 +3,7 @@ package lol.sylvie.lauve.script.datagen.definition;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import lol.sylvie.lauve.script.datagen.JsonSerializable;
-import lol.sylvie.lauve.script.datagen.definition.part.InputPart;
-import lol.sylvie.lauve.script.datagen.definition.part.LabelPart;
-import lol.sylvie.lauve.script.datagen.definition.part.OptionPart;
-import lol.sylvie.lauve.script.datagen.definition.part.Part;
+import lol.sylvie.lauve.script.datagen.definition.part.*;
 import lol.sylvie.lauve.util.Id;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,6 +12,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @Builder(builderMethodName = "")
 public class Definition implements JsonSerializable {
@@ -65,9 +63,16 @@ public class Definition implements JsonSerializable {
             return this.input(id, controller, null);
         }
 
-
         public DefinitionBuilder option(String id, List<String> options) {
             return this.part(new OptionPart(id, options));
+        }
+
+        public DefinitionBuilder template(String id, Id opcode, Map<String, Object> args) {
+            return this.part(new TemplatePart(id, opcode, args));
+        }
+
+        public DefinitionBuilder template(Id opcode, Map<String, Object> args) {
+            return this.template(String.format("template_%s_%s", opcode.namespace(), opcode.path()), opcode, args);
         }
     }
 }

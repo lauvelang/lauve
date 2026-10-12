@@ -4,7 +4,6 @@ import lol.sylvie.lauve.script.operation.Operation;
 import lol.sylvie.lauve.script.runtime.interpreter.Context;
 import lol.sylvie.lauve.script.runtime.script.Argument;
 import lol.sylvie.lauve.script.runtime.script.Node;
-import lol.sylvie.lauve.util.Types;
 
 import java.util.Map;
 

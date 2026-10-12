@@ -1,5 +1,5 @@
 import {Id, Rectangle} from "../utils";
-import {Definition, lookupDefinition, MISSINGNO} from "./definitions";
+import {Definition, lookupDefinition, MISSINGNO, Part} from "./definitions";
 import {Script} from "./script";
 import {script} from "../editor/state";
 
@@ -187,5 +187,17 @@ export class Node {
 
         let id = toolbox ? opcode.toString() : generateNodeId();
         return new Node(id, opcode, args, null, null, 0, 0, toolbox);
+    }
+
+    static templateFor(part: Part): Node {
+        if (part.type !== "template") throw new Error(`Part must be a template`);
+
+        let definition: Definition = lookupDefinition(Id.fromString(part.opcode));
+        if (!definition) throw new Error(`Unknown opcode: ${part.opcode}`);
+
+        let args = new Map<string, Argument>();
+        for (const key of part.args) {
+
+        }
     }
 }
