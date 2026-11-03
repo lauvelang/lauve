@@ -55,11 +55,13 @@ export class Node {
     titleBB: Rectangle;
 
     lastModified: number;
+    toolbox: boolean;
     template: boolean;
 
     definition: Definition;
+    templates: Map<Part, Node>;
 
-    constructor(id: string, opcode: Id, args: Map<string, Argument>, parent: string | null, next: string | null, x: number, y: number, template: boolean = false) {
+    constructor(id: string, opcode: Id, args: Map<string, Argument>, parent: string | null, next: string | null, x: number, y: number, toolbox: boolean = false, template: boolean = false) {
         this.id = id;
         this.opcode = opcode;
         this.args = args;
@@ -70,9 +72,27 @@ export class Node {
         this.titleBB = new Rectangle(x, y, 0, 0);
 
         this.lastModified = 0; this.markModified();
+        this.toolbox = toolbox;
         this.template = template;
 
         this.definition = lookupDefinition(this.opcode);
+        this.templates = this.generateTemplateMap();
+    }
+
+    generateTemplateMap(): Map<Part, Node> {
+        let cache = new Map();
+
+        for (let part of this.definition.description) {
+            if (part.type !== "template") continue;
+
+            cache.set(part, Node.templateFor(part));
+        }
+
+        return cache;
+    }
+
+    getTemplate(part: Part): Node {
+        return this.templates.get(part)!;
     }
 
     mayHaveSubstacks(): boolean {
@@ -186,7 +206,16 @@ export class Node {
         }
 
         let id = toolbox ? opcode.toString() : generateNodeId();
-        return new Node(id, opcode, args, null, null, 0, 0, toolbox);
+        return new Node(id, opcode, args, null, null, 0, 0, toolbox, toolbox);
+    }
+
+    static shallowCopy(node: Node): Node {
+        let copiedArgs = new Map<string, Argument>();
+        for (let [key, value] of node.args) {
+            copiedArgs.set(key, new Argument(true, value.value))
+        }
+
+        return new Node(generateNodeId(), node.opcode, copiedArgs, null, null, 0, 0, false, false)
     }
 
     static templateFor(part: Part): Node {
@@ -196,8 +225,10 @@ export class Node {
         if (!definition) throw new Error(`Unknown opcode: ${part.opcode}`);
 
         let args = new Map<string, Argument>();
-        for (const key of part.args) {
-
+        for (const key of Object.keys(part.args)) {
+            args.set(key, new Argument(true, part.args[key]));
         }
+
+        return new Node(part.id, Id.fromString(part.opcode), args, null, null, 0, 0, false, true);
     }
 }

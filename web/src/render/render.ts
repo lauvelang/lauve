@@ -248,7 +248,8 @@ function calculateSizes(root: Node) {
                 break
             }
             case "template": {
-                let tNode = Node.
+                let tNode = root.getTemplate(part);
+                handleInnerNode(tNode);
 
                 break;
             }
@@ -292,8 +293,8 @@ export function renderFullNode(root: Node) {
     let substack = null;
 
     // Handle any immediate state
-    let testMouseX = root.template ? canvasMouseX : workMouseX;
-    let testMouseY = root.template ? canvasMouseY : workMouseY;
+    let testMouseX = root.toolbox ? canvasMouseX : workMouseX;
+    let testMouseY = root.toolbox ? canvasMouseY : workMouseY;
     if (root.renderBB.isInside(testMouseX, testMouseY) && !shouldDeferToToolbox(root, canvasMouseX)) {
         hoveredNode = root;
         hoveredField = null;
@@ -413,6 +414,15 @@ export function renderFullNode(root: Node) {
                     renderFullNode(node);
                     cx += node.renderBB.width;
                 }
+
+                break;
+            }
+            case "template": {
+                let tNode = root.getTemplate(part);
+                tNode.renderBB.x = cx;
+                tNode.renderBB.y = y + ((root.titleBB.height - tNode.renderBB.height) / 2);
+                renderFullNode(tNode);
+                cx += tNode.renderBB.width;
 
                 break;
             }

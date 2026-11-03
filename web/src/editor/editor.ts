@@ -163,10 +163,11 @@ function startNodeDrag(event: MouseEvent) {
     isDraggingNode = true;
 
     if (hoveredNode && hoveredNode.template) {
-        let copy = Node.defaultOf(hoveredNode.opcode, false);
+        let isToolbox = hoveredNode.toolbox;
+        let copy = Node.shallowCopy(hoveredNode);
         copy.renderBB.setPos(
-            hoveredNode.renderBB.x - script.camera[0],
-            hoveredNode.renderBB.y - script.camera[1]
+            hoveredNode.renderBB.x - (isToolbox ? script.camera[0] : 0),
+            hoveredNode.renderBB.y - (isToolbox ? script.camera[1] : 0)
         )
         script.addNode(copy);
         draggingNode = copy;
