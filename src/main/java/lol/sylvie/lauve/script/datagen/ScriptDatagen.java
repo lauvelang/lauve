@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import lol.sylvie.lauve.script.datagen.impl.*;
 import lol.sylvie.lauve.util.Constants;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;

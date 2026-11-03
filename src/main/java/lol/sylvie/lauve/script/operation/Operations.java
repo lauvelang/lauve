@@ -1,12 +1,14 @@
 package lol.sylvie.lauve.script.operation;
 
-//import lol.sylvie.lauve.script.operation.impl.control.SetupOperation;
+import lol.sylvie.lauve.events.LauveEvents;
 import lol.sylvie.lauve.script.operation.impl.condition.*;
 import lol.sylvie.lauve.script.operation.impl.control.IfElseOperation;
 import lol.sylvie.lauve.script.operation.impl.control.IfOperation;
 import lol.sylvie.lauve.script.operation.impl.control.LoadOperation;
 import lol.sylvie.lauve.script.operation.impl.control.WhileOperation;
 import lol.sylvie.lauve.script.operation.impl.debug.LogOperation;
+import lol.sylvie.lauve.script.operation.impl.event.EventAccessOperation;
+import lol.sylvie.lauve.script.operation.impl.event.EventStartOperation;
 import lol.sylvie.lauve.script.operation.impl.math.*;
 import lol.sylvie.lauve.script.operation.impl.variable.GetOperation;
 import lol.sylvie.lauve.script.operation.impl.variable.IncrementOperation;
@@ -58,6 +60,12 @@ public class Operations {
         register(SetOperation::new);
         register(GetOperation::new);
         register(IncrementOperation::new);
+
+        // Event
+        register(EventAccessOperation::new);
+        LauveEvents.EVENTS.forEach((name, _) -> {
+            register(new EventStartOperation(name));
+        });
 
         // Control
         register(IfOperation::new);

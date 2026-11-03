@@ -1,5 +1,6 @@
 package lol.sylvie.lauve.script.runtime.interpreter;
 
+import lol.sylvie.lauve.events.api.Event;
 import lol.sylvie.lauve.script.runtime.Runtime;
 import lol.sylvie.lauve.script.runtime.script.Node;
 import lol.sylvie.lauve.script.runtime.script.Script;
@@ -14,14 +15,22 @@ public class Context {
     @Getter
     private final Script script;
 
+    @Getter
+    private final Event event;
+
     @Setter
     private Node working;
 
     private String loggerPrefix;
 
-    public Context(Script script) {
+    public Context(Script script, Event event) {
         this.script = script;
         this.loggerPrefix = String.format("[%s] ", script.getFile().getName());
+        this.event = event;
+    }
+
+    public Context(Script script) {
+        this(script, null);
     }
 
     private final HashMap<String, Object> locals = new HashMap<>();
