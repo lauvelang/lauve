@@ -36,7 +36,9 @@ export type Part = {
 export type Definition = {
     substacks: number,
     shape: NodeShape,
-    description: Part[]
+    description: Part[],
+    category?: string,
+    hidden?: boolean
 }
 
 export let DEFINITIONS: { [namespace: string]: { [path: string]: Definition | [number, number, number] } } = {};

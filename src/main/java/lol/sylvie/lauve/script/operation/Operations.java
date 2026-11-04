@@ -57,7 +57,8 @@ public class Operations {
         register(OrOperation::new);
 
         // Variables
-        register(SetOperation::new);
+        register(new SetOperation("set", false));
+        register(new SetOperation("set_global", true));
         register(GetOperation::new);
         register(IncrementOperation::new);
 

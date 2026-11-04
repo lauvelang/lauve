@@ -8,7 +8,7 @@ const canvas = document.getElementById("workspace-canvas");
 const ctx = canvas.getContext("2d");
 
 function translate(id, name) {
-    let translations = window.translations?.[id.namespace]?.[id.path];
+    let translations = window.TRANSLATIONS?.[id.namespace]?.[id.path];
     return translations?.[name] ?? name;
 }
 
@@ -525,7 +525,7 @@ function renderToolbox() {
         ctx.fillStyle = toCss(group.color);
         ctx.fillRect(x + inset, y + inset, TOOLBOX_ICON_SIZE - (inset * 2), TOOLBOX_ICON_SIZE - (inset * 2));
 
-        let groupName = window.translations[groupId]?.["_name"] ?? groupId;
+        let groupName = window.TRANSLATIONS[groupId]?.["_name"] ?? groupId;
         drawText(groupName, x + (TOOLBOX_ICON_SIZE / 2), y + TOOLBOX_ICON_SIZE + 4 - inset, group.color, "top", "center", true)
 
         toolboxHitboxes["groups"][groupId] = hitbox

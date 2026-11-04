@@ -1,0 +1,33 @@
+:root {
+    --font-family: "Monocraft", monospace;
+}
+
+body {
+    background-color: #11111b;
+    color: #cdd6f4;
+    font-family: var(--font-family);
+}
+
+input {
+    font-family: var(--font-family);
+}
+
+span {
+    display: block;
+}
+
+details {
+    position: fixed;
+    overflow-y: scroll;
+    top: 0;
+    right: 0;
+    width: 25%;
+    height: 50%;
+}
+
+details pre {
+    font-family: var(--font-family);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 20px;
+}

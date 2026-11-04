@@ -28,12 +28,21 @@ public class Definition implements JsonSerializable {
     @Builder.Default
     private int substacks = 0;
 
+    @Builder.Default
+    private String category = null;
+
+    @Builder.Default
+    private boolean hidden = false;
+
     @Override
     public JsonObject toJson() {
         JsonObject root = new JsonObject();
 
         if (substacks > 0) root.addProperty("substacks", this.substacks);
         root.addProperty("shape", this.shape.name().toLowerCase(Locale.ROOT));
+
+        if (category != null) root.addProperty("category", category);
+        if (hidden) root.addProperty("hidden", true);
 
         JsonArray array = new JsonArray();
         this.parts.forEach(part -> array.add(part.toJson()));

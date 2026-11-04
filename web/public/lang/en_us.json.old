@@ -1,0 +1,85 @@
+{
+  "control": {
+    "_name": "Control",
+    "load": {
+      "label": "⚐ on script load"
+    },
+    "while": {
+      "control": "while"
+    },
+    "if": {
+      "control": "if"
+    }
+  },
+  "event": {
+    "_name": "Event",
+    "area_effect_cloud_apply": {
+      "name": "on area effect cloud apply"
+    }
+  },
+  "debug": {
+    "_name": "Debug",
+    "log": {
+      "log": "log",
+      "destination": "to console"
+    }
+  },
+  "variable": {
+    "_name": "Variable",
+    "set": {
+      "set": "set",
+      "to": "to",
+      "scope": {
+        "local": "locally",
+        "global": "globally"
+      }
+    },
+    "get": {
+      "get": "value of"
+    },
+    "increment": {
+      "increment": "increment",
+      "by": "by"
+    }
+  },
+  "math": {
+    "_name": "Math",
+    "add": {
+      "operand": "+"
+    },
+    "subtract": {
+      "operand": "-"
+    },
+    "divide": {
+      "operand": "÷"
+    },
+    "multiply": {
+      "operand": "×"
+    },
+    "modulo": {
+      "operand": "mod"
+    },
+    "random_number": {
+      "generate": "random number",
+      "to": "to"
+    }
+  },
+  "condition": {
+    "_name": "Condition",
+    "equals": {
+      "operand": "="
+    },
+    "less_than": {
+      "operand": "<"
+    },
+    "greater_than": {
+      "operand": ">"
+    },
+    "and": {
+      "operand": "and"
+    },
+    "or": {
+      "operand": "or"
+    }
+  }
+}

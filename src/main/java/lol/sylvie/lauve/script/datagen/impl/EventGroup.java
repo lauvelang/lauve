@@ -2,11 +2,13 @@ package lol.sylvie.lauve.script.datagen.impl;
 
 import com.catppuccin.Palette;
 import lol.sylvie.lauve.events.LauveEvents;
+import lol.sylvie.lauve.events.api.UserUnfriendly;
 import lol.sylvie.lauve.script.datagen.BlockGroup;
 import lol.sylvie.lauve.script.datagen.definition.Definition;
 import lol.sylvie.lauve.script.datagen.definition.NodeShape;
 import lol.sylvie.lauve.script.datagen.definition.part.InputPart;
 import lol.sylvie.lauve.util.Id;
+import lol.sylvie.lauve.util.Reflection;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -32,11 +34,14 @@ public class EventGroup extends BlockGroup {
         LauveEvents.EVENTS.forEach((id, clazz) -> {
             Definition.DefinitionBuilder builder = Definition.builder(id(id))
                     .shape(NodeShape.START)
-                    .label("⚡") // HACK
                     .label("name");
 
+            String parent = Reflection.getParentPackage(clazz);
+            builder.category(parent);
+
             for (Field field : clazz.getDeclaredFields()) {
-                // TODO: add a "hidden" decorator so weirdo fields don't get exposed here
+                if (field.isAnnotationPresent(UserUnfriendly.class)) continue;
+
                 String name = field.getName();
                 builder.template("template_" + name, ACCESSOR, Map.of("variable", name));
             }

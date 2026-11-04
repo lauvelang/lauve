@@ -16,14 +16,20 @@ public class VariableGroup extends BlockGroup {
         super("variable", Palette.MOCHA.mauve().components());
     }
 
-    @Override
-    public void init() {
-        define(Definition.builder(id("set"))
+    private Definition.DefinitionBuilder setDefinition(String name) {
+        return Definition.builder(id(name))
                 .label("set")
                 .input("key", InputPart.Controller.VARIABLE)
                 .label("to")
-                .input("value", InputPart.Controller.ANY, "0")
-                .option("scope", List.of("local", "global"))
+                .input("value", InputPart.Controller.ANY, "0");
+    }
+
+    @Override
+    public void init() {
+        define(setDefinition("set")
+                .build());
+        define(setDefinition("set_global")
+                .label("globally")
                 .build());
 
         define(Definition.builder(id("get"))

@@ -3,7 +3,7 @@ import {FONT, SMALL_FONT} from "./font";
 import {Argument, Node} from "../script/node";
 import {script} from "../editor/state";
 import {DEFINITIONS, InputController, lookupColor, NodeShapeConnectivity, Part} from "../script/definitions";
-import {lookupForNode, lookupForOption, lookupGroupName} from "../editor/translations";
+import {lookupForGroup, lookupForNode, lookupForOption, lookupGroupName} from "../editor/translations";
 import {Id, pointInBounds, Rectangle} from "../utils";
 import {draggingNode, initEditor, isDraggingNode, tickEditor} from "../editor/editor";
 import {darkenColor, intArrayToString} from "./color";
@@ -164,8 +164,8 @@ function compareHookPoint(x: number, y: number, node: Node, stack: number = -1, 
 }
 
 // Rendering
-const NODE_PADDING_WIDTH = 10;
-const NODE_PADDING_HEIGHT = 8;
+const NODE_PADDING_WIDTH = 8;
+const NODE_PADDING_HEIGHT = 6;
 
 const doublePaddingW = NODE_PADDING_WIDTH * 2;
 const doublePaddingH = NODE_PADDING_HEIGHT * 2;
@@ -465,21 +465,25 @@ function drawHookIndicator() {
 
 const MINIMIZED_TOOLBOX_WIDTH = 80;
 let toolboxWidth = MINIMIZED_TOOLBOX_WIDTH;
-const TOOLBOX_NODES: Map<string, Node[]> = new Map();
+const TOOLBOX_NODES: Map<string, Map<string, Node[]>> = new Map();
 function initToolbox() {
     for (let group in DEFINITIONS) {
-        let defaults: Node[] = [];
         let definitionsInGroup = DEFINITIONS[group];
+
+        let categories = new Map<string, Node[]>();
+
         for (let path in definitionsInGroup) {
             if (path.startsWith("_")) continue
             let opcode = new Id(group, path);
             let node = Node.defaultOf(opcode, true);
+            let defaults: Node[] = categories.getOrInsertComputed(node.definition.category ?? group, () => new Array<Node>());
 
             calculateSizes(node);
             defaults.push(node);
+
         }
 
-        TOOLBOX_NODES.set(group, defaults);
+        TOOLBOX_NODES.set(group, categories)
     }
 }
 
@@ -551,13 +555,24 @@ function drawToolbox() {
     y = TOOLBOX_NODE_MARGIN;
     let maxNodeWidth = 0;
 
-    for (let node of TOOLBOX_NODES.get(selectedToolboxGroup)!) {
-        node.renderBB.setPos(x, y);
-        renderFullNode(node);
+    let nodesForGroup = TOOLBOX_NODES.get(selectedToolboxGroup)!;
+    for (let [category, nodes] of nodesForGroup) {
+        fontAlignment("left", "top")
+        fillColor(flavor.text.hex);
+        let categoryText = lookupForGroup(selectedToolboxGroup, category);
+        ctx.fillText(categoryText, x, y)
+        y += 32;
 
-        maxNodeWidth = Math.max(maxNodeWidth, node.renderBB.width);
-        y += node.renderBB.height;
-        y += TOOLBOX_NODE_MARGIN;
+        for (let node of nodes) {
+            if (node.definition.hidden) continue;
+
+            node.renderBB.setPos(x, y);
+            renderFullNode(node);
+
+            maxNodeWidth = Math.max(maxNodeWidth, node.renderBB.width);
+            y += node.renderBB.height;
+            y += TOOLBOX_NODE_MARGIN;
+        }
     }
 
     toolboxWidth += maxNodeWidth + TOOLBOX_NODE_MARGIN;
@@ -650,7 +665,8 @@ function draw() {
         [flavor.green.hex, `R: ${canvasMouseX}, ${canvasMouseY}`],
         [flavor.green.hex, `C: ${script.camera[0]}, ${script.camera[1]}`],
         [flavor.blue.hex, `${closestHookNode} (${closestHookPointDist}px)`],
-        [flavor.mauve.hex, `G: ${hoveredToolboxGroup}`]
+        [flavor.mauve.hex, `G: ${hoveredToolboxGroup}`],
+        [flavor.pink.hex, `TB: ${hoveredNode != null ? (<Node> hoveredNode).toolbox : "n/a"} | TP: ${hoveredNode != null ? (<Node> hoveredNode).template : "n/a"}`]
     ]
 
     for (let i = 0; i < debugLines.length; i++) {

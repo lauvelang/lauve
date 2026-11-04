@@ -1,4 +1,5 @@
 import {Script} from "../script/script";
+import {saveObject} from "../utils";
 
 export let loadedScripts: Script[] = [];
 export let script: Script;
@@ -41,15 +42,7 @@ export function promptLoad(event: KeyboardEvent) {
 }
 
 export function promptSave(event: KeyboardEvent) {
-    const content = JSON.stringify(script.serialize());
-    const file = new Blob([content], {type: 'text/plain'});
-
-    const button = document.createElement("a");
-    button.setAttribute("href", window.URL.createObjectURL(file));
-    button.setAttribute("download", script.name);
-    button.click();
-
-    event.preventDefault();
+    saveObject(script.serialize(), script.name, event);
 }
 
 export function initState() {

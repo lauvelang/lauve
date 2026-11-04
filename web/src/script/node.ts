@@ -85,7 +85,7 @@ export class Node {
         for (let part of this.definition.description) {
             if (part.type !== "template") continue;
 
-            cache.set(part, Node.templateFor(part));
+            cache.set(part, Node.templateFor(part, this.toolbox));
         }
 
         return cache;
@@ -218,7 +218,7 @@ export class Node {
         return new Node(generateNodeId(), node.opcode, copiedArgs, null, null, 0, 0, false, false)
     }
 
-    static templateFor(part: Part): Node {
+    static templateFor(part: Part, toolbox: boolean): Node {
         if (part.type !== "template") throw new Error(`Part must be a template`);
 
         let definition: Definition = lookupDefinition(Id.fromString(part.opcode));
@@ -229,6 +229,6 @@ export class Node {
             args.set(key, new Argument(true, part.args[key]));
         }
 
-        return new Node(part.id, Id.fromString(part.opcode), args, null, null, 0, 0, false, true);
+        return new Node(part.id, Id.fromString(part.opcode), args, null, null, 0, 0, toolbox, true);
     }
 }

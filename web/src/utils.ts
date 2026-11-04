@@ -1,4 +1,6 @@
 // ID
+import {script} from "./editor/state";
+
 export class Id {
     static SEPARATOR: string = ":";
 
@@ -60,4 +62,16 @@ export class Rectangle {
     isInside(x: number, y: number) {
         return pointInBounds(this.x, this.y, this.width, this.height, x, y)
     }
+}
+
+export function saveObject(obj: any, filename: string, event: Event, pretty: boolean = false) {
+    const content = JSON.stringify(obj, null, pretty ? 4 : 0);
+    const file = new Blob([content], {type: 'text/plain'});
+
+    const button = document.createElement("a");
+    button.setAttribute("href", window.URL.createObjectURL(file));
+    button.setAttribute("download", filename);
+    button.click();
+
+    event.preventDefault();
 }

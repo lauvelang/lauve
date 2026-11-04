@@ -19,6 +19,7 @@ public class DebugGroup extends BlockGroup {
     public void init() {
         define(Definition.builder(id("missingno"))
                         .label("unknown")
+                        .hidden(true)
                         .build());
 
         define(Definition.builder(id("log"))

@@ -50,7 +50,12 @@ function tickCursor() {
         if (hoveredField) {
             setCursor(hoveredFieldController == InputController.SELECT ? "pointer" : "text");
         } else {
-            setCursor("grab")
+            if (hoveredNode.template) {
+                setCursor("copy")
+            } else {
+                setCursor("grab")
+            }
+
         }
     } else {
         setCursor("default")

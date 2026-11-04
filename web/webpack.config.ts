@@ -8,10 +8,13 @@ const __dirname = path.dirname(__filename);
 
 export default {
     mode: "development",
-    entry: "./src/index.ts",
+    entry: {
+        "bundle": "./src/index.ts",
+        "translator": "./src/develop/translator.ts"
+    },
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: "bundle.js"
+        filename: "[name].js"
     },
     resolve: {
         extensions: [".ts", ".tsx", ".js"]

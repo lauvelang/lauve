@@ -1,6 +1,15 @@
 package lol.sylvie.lauve.util;
 
+import net.minecraft.network.chat.PlayerChatMessage;
+
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 public class TypeCoercion {
+    // Getters
     public static boolean canBeNumber(Object value) {
         if (value instanceof Number) return true;
 
@@ -38,5 +47,17 @@ public class TypeCoercion {
 
     public static boolean fuzzyEquals(double x, double y) {
         return Math.abs(x - y) < 1E-6;
+    }
+
+    // Setters
+    public static void setField(Object object, Field field, Object value) throws IllegalAccessException {
+        if (field.getType().equals(PlayerChatMessage.class)) {
+            PlayerChatMessage previous = (PlayerChatMessage) field.get(object);
+            String text = toString(value);
+            field.set(object, PlayerChatMessage.system(text));
+            return;
+        }
+
+        field.set(object, value);
     }
 }
